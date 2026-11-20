@@ -27,6 +27,7 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-021 | 2026-11-20 | Default 10 worker processes (memory bound) | Accepted |
 | D-022 | 2026-11-20 | Hand-made hard cases with oracle-drafted, human-reviewed labels | Accepted |
 | D-023 | 2026-11-20 | Budget exhaustion stops a game instead of falling back | Accepted |
+| D-024 | 2026-11-20 | Keep medium noise as the main setting; decision-level benchmark carries the main comparison | Accepted |
 
 ---
 
@@ -178,3 +179,10 @@ Each entry records one design decision: the context, what we chose, the alternat
 
 - **Context.** The runner turns any policy exception into the fallback shot (D-009). If the budget ran out mid-game, the rest of the game would silently be played by the fallback rule.
 - **Decision.** `BudgetExceeded` is re-raised by the runner; the game (or tournament job) stops and is resumed later from the response cache. Tested.
+
+## D-024: Main noise level and where the statistical weight goes
+
+- **Evidence (E0, E0b; `results/summary.md`).** B2 (search) vs B1 (geometric), paired seeds, both seat orders: low noise 53 % [41, 65] (60 games), medium 54 % [44, 63] (100 games), high 52 % [39, 64] (60 games); none significant. B2 pots more often at low and medium noise (0.75 vs 0.69; 0.61 vs 0.53). B2 beats random play clearly (79 % at medium).
+- **Interpretation.** Under these rules and this menu, better shot selection changes game outcomes only slightly; outcomes are dominated by execution luck and by who gets the table in a good layout. Lowering the noise does not make skill differences show up in win rates, so there is no reason to move away from the planned medium setting (a plausible amateur).
+- **Decision.** Keep medium noise for the dataset, the oracle and all main experiments. Treat the positions benchmark (regret against the oracle) as the primary evidence for RQ1/RQ2; report game win rates (E2) as secondary evidence with honest power statements (with ~50 games per pairing only very large gaps are detectable).
+- **Also measured.** Profiling one L2 decision (8 balls): 222 pooltool simulations account for ~85 % of the time (~34 ms each); our code's overhead is small. Speed-ups would require fewer rollouts or more processes, and process count is limited by RAM (D-021), so settings stay as planned.

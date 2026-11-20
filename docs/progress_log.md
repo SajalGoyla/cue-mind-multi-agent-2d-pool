@@ -100,7 +100,11 @@ One entry per working session: what was done, how it was tested, where outputs a
 **Tested**
 - Full suite: 65 tests pass (`pytest -q`, ~2 min).
 
+**E0b (noise calibration, B2 vs B1, 30 paired seeds per level)** — `results/e0_noise/`
+- Low 53 % [41, 65], high 52 % [39, 64]; with medium (E0) 54 %: no level separates B2 from B1 in games. Decision D-024: keep medium noise; the decision-level benchmark carries the main comparison.
+- Profiling: ~85 % of decision time is pooltool physics (D-024), so the long runs are inherent; work continues in parallel while they run.
+
 **Open / next**
-- E0b (running): B2 vs B1 at low and high noise; choose the main noise level.
+- Positions dataset build (running, ~35 min).
 - Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.

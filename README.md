@@ -93,6 +93,11 @@ All LLM responses are cached in `results/cache/llm_cache.sqlite`, so re-running 
 | E4 | Simulation-access ablation (L0/L1/L2) | `python experiments/run_positions.py --config experiments/configs/e4.yaml --max-usd 5` |
 | E6 | Specialist ablations | `python experiments/run_positions.py --config experiments/configs/e6.yaml --max-usd 5` |
 | E10 | Decision variance (3 samples) | `python experiments/run_positions.py --config experiments/configs/e10.yaml --limit 30` |
+| E2 | Full games SA vs MA vs B2 (LLM) | `python experiments/run_tournament.py --config experiments/configs/e2.yaml` |
+| Hard cases | Build/refresh hand-made cases + PNGs for review | `python experiments/build_hard_cases.py` |
+| Analysis | All tables and figures → `results/summary.md`, `results/figures/` | `python experiments/analyze.py` |
+| Errors | Highest-regret LLM decisions for error analysis | `python experiments/failure_cases.py --exp e1` |
+| Demo assets | Pick S1–S4 sample runs from real logs, export PNGs | `python scripts/export_demo_assets.py --exp e1` |
 
 Add `--llm fake` to any positions experiment to run it offline. Tournaments and dataset building are CPU-only (no API cost); use `--workers` to match your machine (each worker needs ~0.5 GB of RAM). Results go to `results/<exp_id>/` (`summary.csv`, `games.jsonl` or `decisions.jsonl`, `config_used.json`).
 
