@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cuemind"
+version = "0.1.0"
+description = "Multi-agent LLM strategic decision-making for 2D pool (COMS E6998-007 project)"
+requires-python = ">=3.12,<3.14"
+readme = "README.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cuemind = ["llm/prompts/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+timeout = 120
+markers = [
+    "slow: long-running tests (deselect with -m 'not slow')",
+    "live: calls the real LLM API (skipped unless selected with -m live)",
+]
+addopts = "-m 'not live'"
