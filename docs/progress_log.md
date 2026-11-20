@@ -50,5 +50,35 @@ One entry per working session: what was done, how it was tested, where outputs a
 **Lesson (tooling)**
 - On Windows, Python's default file encoding is cp1252: helper scripts must pass `encoding="utf-8"` (or run with `PYTHONUTF8=1`). One doc was truncated by this and rewritten; all files were re-checked as valid UTF-8.
 
+## 2026-11-20: Phase 3 infrastructure and Phase 5 LLM layer
+
+**Done**
+- Tournament runner (D-018) with experiment configs `experiments/configs/e0.yaml`, `e0_noise.yaml` and CLI `experiments/run_tournament.py`; statistics and metrics modules.
+- LLM layer (D-016): Vertex client with structured outputs, prompt caching, response cache, cross-process budget guard, FakeLLM.
+- Prompts (`llm/prompts/*.md`), SA, SA-vote, MA (LangGraph, D-017), MA+critic, MA ablations; all registered by name.
+- `scripts/check_llm.py` live check; local `.env` (git-ignored) points to the existing service-account key by path.
+
+**Tested**
+- 57 tests pass offline, including prompt fairness (SA prompt contains every specialist's knowledge; each specialist only its own), retry → fallback, SA-vote sampling, MA fan-out/coordination, ablation and critic paths, cache hit/offline mode, budget guard, cost formula, tournament run + resume + summary, stats against known values, degenerate-geometry regression.
+
+**Blocked: live LLM calls**
+- `scripts/check_llm.py` fails with HTTP 429 `RESOURCE_EXHAUSTED: Quota exceeded for aiplatform.googleapis.com/global_online_prediction_requests_per_base_model` for both `anthropic-claude-haiku` and `anthropic-claude-sonnet` on the `global` endpoint. Regional endpoints (`us-east5`, `europe-west1`) return 404 (model not enabled). Action for the team: request a quota increase for Claude on Vertex AI in the GCP console (IAM & Admin → Quotas, metric `global_online_prediction_requests_per_base_model`) or enable the models in a region, then re-run `python scripts/check_llm.py`.
+
+**E0 (running)**
+- 300 games (B2–B1, B2–B0, B1–B0; 50 paired seeds; medium noise; L2). One early game hit a pooltool `ZeroDivisionError` (fixed, D-014 update); re-running the command re-plays errored games.
+
+## 2026-11-20: Phase 4 (positions benchmark) and Phase 8 (demo) code
+
+**Done**
+- Oracle (EIV) and positions benchmark code (D-019); dataset builder and positions runner CLIs; configs for E1, E4, E6, E10 and a dev-split pilot.
+- `sim/trajectories.py` and `viz/table_plot.py` (Plotly table with diamonds, candidate aim lines, animated replays).
+- Streamlit demo (D-020) with four demo positions in `demo/sample_inputs.json` (hand-made illustrations; to be replaced by positions mined from real logs).
+- README rewritten as a tutorial (setup, quick start, live check, experiment commands, costs, troubleshooting); `data/README.md`.
+
+**Tested**
+- New tests: oracle determinism and sanity (a hanging pot is worth more than any safety), frozen-menu information hiding by access level, scoring, random positions validity, tags; demo smoke test (offline end to end).
+- The tournament integration test failed twice with `MemoryError` while E0 was using the machine (environmental, D-021); to be re-run after E0.
+
 **Open / next**
-- Phase 3: parallel tournament runner (paired seeds, swapped seats, resumable), E0 baseline tournaments, noise calibration, B2 weight check.
+- Finish E0; re-run full test suite; build the positions dataset; offline pilot of the positions runner.
+- Waiting on the Vertex AI quota to run any LLM experiment.

@@ -49,6 +49,7 @@ def direct_pots(system: pt.System, targets: list[str], max_cut: float = DEFAULT_
     cue = system.balls["cue"]
     balls = _on_table(system)
     out: list[PotGeometry] = []
+    np_err = np.seterr(divide="ignore", invalid="ignore")  # NaNs are rejected explicitly below
     rejected: list[tuple[str, str, list[str]]] = []
     for tid in targets:
         if tid not in system.balls or system.balls[tid].state.s == const.pocketed:
@@ -67,21 +68,30 @@ def direct_pots(system: pt.System, targets: list[str], max_cut: float = DEFAULT_
             if np.linalg.norm(aim_vec) < 1e-9:
                 rejected.append((tid, pocket.id, ["degenerate_geometry"]))
                 continue
-            cut = abs(float(pot.angle_between_vectors(aim_vec, pocket_vec)))
-            if pot.is_pocket_occluded(ball, table, pocket, balls):
-                reasons.append("pocket_path_blocked")
-            if not pot.is_room_for_cue_ball(ball, table, pocket, balls):
-                reasons.append("no_room_for_ghost_ball")
-            if pot.is_jaw_in_way(ball, table, pocket):
-                reasons.append("jaw_in_way")
-            if pot.is_object_ball_occluded(cue, ball, table, pocket, balls):
-                reasons.append("cue_path_blocked")
+            try:
+                cut = abs(float(pot.angle_between_vectors(aim_vec, pocket_vec)))
+                if pot.is_pocket_occluded(ball, table, pocket, balls):
+                    reasons.append("pocket_path_blocked")
+                if not pot.is_room_for_cue_ball(ball, table, pocket, balls):
+                    reasons.append("no_room_for_ghost_ball")
+                if pot.is_jaw_in_way(ball, table, pocket):
+                    reasons.append("jaw_in_way")
+                if pot.is_object_ball_occluded(cue, ball, table, pocket, balls):
+                    reasons.append("cue_path_blocked")
+            except (ZeroDivisionError, ValueError, FloatingPointError):
+                # pooltool's helpers divide by path lengths that can be zero when a ball sits
+                # in the pocket mouth or touches another ball (seen in E0, D-014).
+                rejected.append((tid, pocket.id, ["degenerate_geometry"]))
+                continue
             if cut > max_cut:
                 reasons.append("cut_angle_too_large")
             if reasons:
                 rejected.append((tid, pocket.id, reasons))
                 continue
             phi = float(pot.calc_potting_angle(cue, ball, table, pocket)) % 360.0
+            if not (np.isfinite(phi) and np.isfinite(cut)):
+                rejected.append((tid, pocket.id, ["degenerate_geometry"]))
+                continue
             try:
                 prec = float(pot.required_precision(cue.state, ball.state, table, pocket))
             except Exception:  # noqa: BLE001
@@ -93,5 +103,6 @@ def direct_pots(system: pt.System, targets: list[str], max_cut: float = DEFAULT_
                 required_precision_deg=round(prec, 3),
                 ghost=(round(float(ghost[0]), 5), round(float(ghost[1]), 5)),
             ))
+    np.seterr(**np_err)
     out.sort(key=lambda g: (-g.ease, int(g.target_ball), g.pocket))
     return (out, rejected) if with_reasons else out

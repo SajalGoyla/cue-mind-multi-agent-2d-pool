@@ -18,7 +18,7 @@ candidates.pipeline.prepare(state, PrepConfig)        identical for every policy
    │
    ▼
 Policy.decide(DecisionContext) -> Decision(shot_id, intent, rationale, trace, usage)
-   B0 random │ B1 geometric │ B2 search (D-011) │ SA │ SA-vote │ MA (planned)
+   B0 random │ B1 geometric │ B2 search (D-011) │ SA │ SA-vote │ MA │ MA+critic (D-016, D-017)
    │                                    invalid id / exception → shared fallback (D-009)
    ▼
 NoiseModel.apply(stroke, rng_for(seed, shot_index, "execute"))   common random numbers (D-004)
@@ -49,7 +49,18 @@ sim.execute.simulate() ─► extract_events() ─► rules.judge() ─► rules
 | `policies/base.py` | Policy protocol, fallback rule | `DecisionContext`, `Decision`, `Policy`, `fallback_choice` |
 | `policies/simple_bots.py` | B0 random, B1 geometric | `RandomBot`, `GeometricBot` |
 | `policies/search_bot.py` | B2: max expected value over the annotated menu | `SearchBot`, `SearchWeights`, `expected_value` |
-| `policies/registry.py` | Policy names for CLIs/configs | `make_policy`, `register` |
+| `policies/registry.py` | Policy names for CLIs/configs; builds LLM clients from config | `make_policy`, `make_llm_client`, `known_policies` |
+| `policies/single_agent.py` | SA and SA-vote | `SingleAgent` |
+| `policies/multi_agent.py` | MA, MA+critic, MA ablations | `MultiAgent` |
+| `agents/graph_multi.py` | LangGraph fan-out/fan-in graph | `build_graph`, `MAState` |
+| `agents/common.py` | id validation with one corrective retry; usage totals | `call_with_id_check`, `sum_usage` |
+| `llm/client.py` | Claude on Vertex, FakeLLM, cost accounting | `ClaudeVertexClient`, `FakeLLM`, `LLMResult`, `cost_usd` |
+| `llm/cache.py` | SQLite response cache and spending ledger | `ResponseCache`, `Budget`, `BudgetExceeded` |
+| `llm/schemas.py` | Structured-output schemas | `SingleDecision`, `SpecialistReport`, `CoordinatorDecision`, `CriticVerdict` |
+| `llm/promptlib.py` + `llm/prompts/*.md` | Prompt text and assembly | `system_single`, `system_specialist`, `decision_context_text`, `prompt_version` |
+| `eval/tournament.py` | Paired, resumable, parallel tournaments | `build_jobs`, `run_tournament` |
+| `eval/metrics.py` | Per-seat game metrics, pairing summaries | `seat_metrics`, `pairing_summary` |
+| `eval/stats.py` | Wilson, bootstrap, sign test, Wilcoxon, Holm | |
 
 ## 3. Coordinate frame and table
 
@@ -75,3 +86,20 @@ One JSON line per shot (`game/runner.py`). Fields: `exp_id, game_id, seed, shot_
 ## 7. Reproducibility
 
 A game is fully determined by (seed, policies, `PrepConfig`, noise preset): the rack (D-008, D-013), break jitter, rollout streams (D-010) and execution noise (D-004) all derive from the seed through `rng_for` (SHA-256 of the keys), never from global or hash-order-dependent state. Verified by running the same L2 game under different `PYTHONHASHSEED` values. LLM policies are the exception (no temperature control); their responses are cached for exact replay (planned, Phase 5).
+
+## 8. LLM decision flow (SA and MA)
+
+```
+DecisionContext ──► promptlib.decision_context_text()   position summary + last 3 shots + candidate table
+                     │
+     SA:  system_single (rules + offense + position + safety knowledge + role) ──► SingleDecision
+     MA:  ┌ system_specialist(offense)  ─► SpecialistReport ┐
+          ├ system_specialist(position) ─► SpecialistReport ┼─► system_coordinator ─► CoordinatorDecision ─► (critic)
+          └ system_specialist(safety)   ─► SpecialistReport ┘
+                     │
+   every call: cache lookup → budget check → messages.parse (structured output, cached system prompt)
+               → id check (one corrective retry) → shared fallback if still invalid
+                     │
+   Decision.trace: prompt version, every attempt (parsed output, tokens, latency, cache hit), reports,
+                   followed/overruled specialists, critic verdict  → logged per shot, shown in the demo
+```

@@ -1,0 +1,25 @@
+{
+  "_note": "Demo positions. S1-S3 are hand-made illustrations; replace or extend with positions mined from real experiment logs before the presentation (plan section 13.2).",
+  "positions": [
+    {
+      "name": "S1 Easy pot (both systems should agree)",
+      "state": {"cue": [0.40, 1.40], "balls": {"1": [0.12, 1.86], "3": [0.65, 0.55], "9": [0.80, 0.40], "12": [0.30, 0.90], "8": [0.70, 1.00]},
+                "shooter": "P1", "groups": {"P1": "solids", "P2": "stripes"}}
+    },
+    {
+      "name": "S2 Position play (several pots, different leaves)",
+      "state": {"cue": [0.50, 0.60], "balls": {"1": [0.20, 1.70], "3": [0.75, 1.20], "4": [0.30, 0.90], "10": [0.50, 1.00], "12": [0.80, 1.70], "8": [0.30, 1.30]},
+                "shooter": "P1", "groups": {"P1": "solids", "P2": "stripes"}}
+    },
+    {
+      "name": "S3 Defensive spot (opponent on the 8)",
+      "state": {"cue": [0.85, 0.35], "balls": {"2": [0.15, 1.55], "6": [0.55, 1.75], "8": [0.45, 1.10], "14": [0.70, 0.75]},
+                "shooter": "P1", "groups": {"P1": "solids", "P2": "stripes"}}
+    },
+    {
+      "name": "S4 Open table after the break",
+      "state": {"cue": [0.50, 0.50], "balls": {"1": [0.30, 1.40], "5": [0.62, 1.62], "7": [0.20, 0.80], "9": [0.80, 1.20], "11": [0.55, 0.95], "13": [0.12, 1.85], "15": [0.85, 1.80], "8": [0.50, 1.50]},
+                "shooter": "P1", "groups": {"P1": "open", "P2": "open"}}
+    }
+  ]
+}

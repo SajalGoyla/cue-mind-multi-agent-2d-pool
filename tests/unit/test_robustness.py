@@ -63,3 +63,16 @@ def test_failed_rollouts_count_as_fouls(monkeypatch):
     monkeypatch.setattr(execute.pt, "simulate", broken)
     r = rollouts(MID, cands, 3, "medium", (0,))[0].rollouts
     assert r.p_foul == 1.0 and r.p_pot == 0.0 and r.opp_threat == 1.0
+
+
+def test_direct_pots_survive_degenerate_geometry():
+    """E0 crash: a ball in a pocket mouth made pooltool divide by zero (now rejected)."""
+    from cuemind.candidates.direct import direct_pots
+    from cuemind.sim.state import BALL_R
+
+    s = TableState(cue=(0.5, 0.6), balls={"1": (BALL_R * 0.4, BALL_R * 0.4),
+                                          "2": (0.5, 0.6 + 2.0 * BALL_R), "3": (0.4, 1.2)},
+                   groups={"P1": "solids", "P2": "stripes"})
+    pots, rejected = direct_pots(to_system(s), ["1", "2", "3"], with_reasons=True)
+    import math
+    assert all(math.isfinite(g.phi) and math.isfinite(g.cut_deg) for g in pots)

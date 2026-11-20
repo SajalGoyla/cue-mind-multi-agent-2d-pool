@@ -1,0 +1,9 @@
+# E10: decision variance: 3 independent samples on the first 30 test positions
+# (run with --limit 30).
+exp_id: e10
+positions: [data/positions/test.jsonl]
+systems: [sa, ma]
+access_levels: [L2]
+repeats: 3
+threads: 4
+llm: {max_usd: 3}

@@ -18,6 +18,13 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-012 | 2026-11-20 | Positions shown to LLMs in diamonds and named zones | Accepted |
 | D-013 | 2026-11-20 | Assign rack ball numbers ourselves (cross-process determinism) | Accepted |
 | D-014 | 2026-11-20 | Retry pooltool failures with a negligible aim nudge | Accepted |
+| D-015 | 2026-11-20 | Pin `httpx` to the stable 0.28 line | Accepted |
+| D-016 | 2026-11-20 | LLM layer: structured outputs, cache, budget, fake LLM, one retry | Accepted |
+| D-017 | 2026-11-20 | Multi-agent graph in LangGraph; coordinator sees all strategy knowledge | Accepted |
+| D-018 | 2026-11-20 | Tournament protocol: paired seeds, swapped seats, resumable, process pool | Accepted |
+| D-019 | 2026-11-20 | Positions benchmark: frozen annotated menus, oracle EIV, decision-level metrics | Accepted |
+| D-020 | 2026-11-20 | Demo: Streamlit + Plotly, offline / live / cache-only modes | Accepted |
+| D-021 | 2026-11-20 | Default 10 worker processes (memory bound) | Accepted |
 
 ---
 
@@ -109,4 +116,52 @@ Each entry records one design decision: the context, what we chose, the alternat
 
 - **Context.** One of 20 games ended with an internal `AssertionError` raised inside `pt.simulate` (degenerate collision geometry) during safety generation.
 - **Decision.** `sim.execute.simulate` retries with the aim nudged by ±1e-4° and 3e-4° (far below any execution noise) and raises `SimulationError` if all attempts fail. Safety generation drops such a candidate; a failed L2 rollout is scored conservatively as a foul (turn over, threat 1.0). The real executed shot in a game goes through the same retry; a total failure ends the game with `status="error"` (counted and reported).
+- **Update (E0).** A second pooltool failure mode appeared in E0 (1 of the first 42 games): `ZeroDivisionError` inside the pot-occlusion helpers when a ball sits in a pocket mouth, plus NaN aim angles from zero-length vectors. `direct_pots` now rejects such (ball, pocket) pairs as `degenerate_geometry` and drops any pot with a non-finite angle or cut. Regression test added.
 - **Consequences.** Games no longer abort on a single pooltool failure. `simulate` now always returns a simulated copy and never mutates its input.
+
+## D-015: Pin `httpx` to the stable 0.28 line
+
+- **Context.** Installing pooltool requires `--prerelease=allow` (its Panda3D pin is a dev build). That flag also pulled `httpx==1.0.dev6`, which breaks `langgraph-sdk` (`httpx.HTTPStatusError` no longer exists). The Anthropic SDK uses its own `httpx2` package and is unaffected.
+- **Decision.** Pin `httpx==0.28.1` in `requirements.txt`.
+
+## D-016: LLM layer design
+
+- **Decision.**
+  - `llm/client.py`: `ClaudeVertexClient` calls `messages.parse(output_format=<pydantic schema>, output_config={"effort": ...})` with the system prompt marked `cache_control: ephemeral` (prompt caching). It checks `stop_reason` (`refusal`, `max_tokens` → error), catches `RateLimitError` / `APIStatusError` / `APIConnectionError` separately, and records input, output, cache-read and cache-write tokens and an estimated cost (`experiments/configs/prices.yaml`; Vertex prices must be confirmed).
+  - `llm/cache.py`: SQLite response cache keyed by SHA-256 of (model, effort, system, user, schema, repeat index). Failures are never cached. The same file holds a spending ledger: `Budget(run_id, max_usd)` is shared by all worker processes and stops a run cleanly at the limit (cached calls are free, so runs resume).
+  - `FakeLLM` (deterministic, reads the candidate table) powers every test and an offline demo mode; it can also emit invalid ids or no output to test failure handling.
+  - `agents/common.call_with_id_check`: if the returned `shot_id` is not in the menu (or nothing parsed), the model is asked once more with the list of valid ids; after that the shared fallback rule applies (D-009).
+  - Prompts live in `llm/prompts/*.md`; `promptlib.prompt_version()` hashes them and every decision logs the hash.
+- **Alternatives.** LangChain's `ChatAnthropicVertex`: less direct control over caching, token accounting and retries. JSON-in-text parsing: less reliable than structured outputs.
+- **Consequences.** Temperature cannot be set on these models, so live outputs are not bit-reproducible; the cache makes replays exact and SA-vote uses `repeat_idx` 0–3 to draw independent samples.
+
+## D-017: Multi-agent graph in LangGraph; coordinator sees all strategy knowledge
+
+- **Decision.** `agents/graph_multi.py` builds `START → {offense, position, safety} → coordinator → (critic → coordinator_retry) → END`. Specialists run in one LangGraph superstep (concurrently) with only their own strategy block; reports are merged with a dict-union reducer. The coordinator's system prompt contains the rules and all three strategy blocks (it must weigh them); the single agent's prompt contains exactly the same blocks, so MA never has knowledge that SA lacks (tested). The critic may veto once. Specialists can be removed for ablations (`ma-no-offense`, etc.).
+- **Consequences.** MA makes 4 calls per decision (5 with the critic, plus any id-retry). SA-vote (4 samples, majority vote, ties by mean confidence) is the compute-matched control.
+
+## D-018: Tournament protocol
+
+- **Decision.** `eval/tournament.py`: for each seed and pairing (X, Y), X breaks in one game and Y in the other; both games share rack, break jitter, rollout and noise streams. Games run in a process pool (each worker warms the JIT once); each finished game appends one summary line to `results/<exp>/games.jsonl` (with per-seat metrics), and full shot logs go to `results/<exp>/raw/` (git-ignored). Re-running skips finished games and retries errored ones.
+- **Statistics** (`eval/stats.py`): Wilson CI for win rates; paired seed score (0–2, minus 1) with a bootstrap CI and a two-sided sign test; Wilcoxon signed-rank with rank-biserial effect size and Holm correction for decision-level comparisons.
+
+## D-019: Positions benchmark
+
+- **Context.** Full games are expensive with LLMs and noisy (a 50-seed tournament can only detect large win-rate gaps). The plan puts most statistical weight on a decision-level benchmark.
+- **Decision.** `eval/positions.py`, `eval/oracle.py`, `experiments/build_dataset.py`, `experiments/run_positions.py`:
+  - Positions come from B2-vs-B1 games (2 per game) plus 20 % random valid layouts; dev 60 / test 180, test stratified by difficulty.
+  - Each position stores **one frozen menu** built at L2 (candidates keep geometry, preview and rollouts). For L0/L1 runs the same menu is re-described with fields hidden, so access levels differ only in information, not in the shots on offer.
+  - **Oracle (EIV):** 24 noisy executions per candidate; +1 per own ball legally pocketed, inning continued by the B1 rule for up to 2 shots, −1 per foul, −0.75 × opponent threat when the turn passes, ±5 for winning/losing on the 8. B1 (not B2) continues the inning so the oracle does not agree with B2 by construction.
+  - Metrics per decision: regret (best EIV − chosen EIV), top-1 (within one standard error of the best), normalised score (0 = random choice, 1 = best), plus fallback rate, calls, tokens, cost and latency; broken down by difficulty and situation tag.
+  - `DecisionContext.sample_idx` gives independent LLM samples for the decision-variance experiment (E10) without disturbing the cache of the main runs.
+- **Consequences.** The oracle is an approximation of game value; position-level regret will be checked against game outcomes (E2) and the limitation reported.
+
+## D-020: Demo design
+
+- **Decision.** `demo/app.py` (Streamlit + Plotly), three tabs: *Decide a shot* (pick a demo or benchmark position, see the candidate menu drawn on the table, run SA and MA side by side with specialist cards, oracle panel for benchmark positions, execute the chosen shot with noise and watch the animation), *Replay a game* (step through a logged game with each decision's rationale and specialist reports; animate any shot), *Results* (summary tables and figures). Modes: offline fake LLM (no network), live Claude with the response cache (cached answers are labelled), cache-only.
+- **Reliability.** Errors are shown as messages, never stack traces; replay and results tabs work without network; a smoke test (`tests/smoke/test_demo_app.py`, Streamlit `AppTest`) runs the app offline end to end.
+
+## D-021: Default 10 worker processes
+
+- **Context.** The development machine has 32 logical CPUs but 15.7 GB RAM. E0 with 24 workers left < 1 GB free, and concurrently started processes failed with "paging file is too small" / `MemoryError`.
+- **Decision.** Configs default to 10 workers (each ~0.5 GB). Increase only on machines with more memory.

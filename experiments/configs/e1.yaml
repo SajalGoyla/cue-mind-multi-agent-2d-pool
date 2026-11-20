@@ -1,0 +1,8 @@
+# E1: main decision-level comparison (RQ1, RQ2). Same frozen menus, L2 information.
+exp_id: e1
+positions: [data/positions/test.jsonl]
+systems: [b0, b1, b2, sa, ma, sa-vote]
+access_levels: [L2]
+repeats: 1
+threads: 4
+llm: {max_usd: 5}

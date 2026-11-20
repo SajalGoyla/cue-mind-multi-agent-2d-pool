@@ -1,0 +1,8 @@
+# E4: simulation-access ablation (RQ3): the same menus described at L0, L1 and L2.
+exp_id: e4
+positions: [data/positions/test.jsonl]
+systems: [sa, ma, b2]
+access_levels: [L0, L1, L2]
+repeats: 1
+threads: 4
+llm: {max_usd: 5}

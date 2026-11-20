@@ -4,58 +4,117 @@ Course project for **COMS E6998-007: Introduction to LLM Based Generative AI Sys
 
 **Team:** Sajal Kumar Goyla · Shambhawi Bhure · Alimurtaza Mustafa Merchant
 
-> **Status:** early development. The execution plan is in place; code, data, and results will be added in phases. See [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md).
+## What this is
 
-## Overview
+When an LLM has to make a sequence of decisions with long-term consequences, does splitting each decision across specialized agents beat a single agent that has the same tools? CueMind studies this with eight-ball pool in the [pooltool](https://github.com/ekiefl/pooltool) physics simulator, where every game ends in a clear win or loss.
 
-When an LLM has to make a sequence of decisions with long-term consequences, does splitting each decision across specialized agents beat a single agent that has the same tools? CueMind studies this question with full games of eight-ball pool in the [pooltool](https://github.com/ekiefl/pooltool) physics simulator, where every game ends in a clear win or loss.
+LLMs are poor at the numerical side of pool, so the work is split:
 
-LLMs are poor at the numerical side of pool (aim angle, power), so CueMind splits the work:
-
-- **Code handles the geometry and physics.** A shared shot generator proposes feasible candidate shots (target ball, pocket, angle, power, spin), and pooltool simulates their likely outcomes.
-- **The LLM makes the judgment.** It picks one candidate by its `shot_id`, so it can never produce an illegal or nonsensical action.
-
-The systems we compare get the same candidates, information, model, and simulation budget:
+- **Code does geometry and physics.** A shared generator proposes candidate shots (target, pocket, aim, speed, spin); pooltool simulates them, with realistic stroke errors, to estimate how often each shot pots, scratches or fouls, where the cue ball ends, and what the opponent gets if it misses.
+- **The LLM system chooses.** It picks one candidate by its `shot_id` and explains why. Illegal or nonsensical actions are impossible by construction.
 
 | System | Description |
 |---|---|
-| Geometric bot | Plays the easiest-looking pot (non-LLM reference) |
-| Search bot | Simulates every candidate and keeps the best (non-LLM reference) |
-| Single agent | One LLM call per shot |
-| Multi-agent | Offense, position, and safety specialists, plus a coordinator that picks the shot (LangGraph) |
+| B0 random | Random candidate (floor) |
+| B1 geometric | Easiest-looking pot (non-LLM reference) |
+| B2 search | Highest expected value over the same simulated menu (strong non-LLM reference) |
+| SA | Single LLM agent, one call per shot |
+| SA-vote | Single agent, 4 independent samples + majority vote (compute-matched control) |
+| MA | Offense, position and safety specialists in parallel + a coordinator (LangGraph) |
+| MA+critic, MA ablations | Extension and ablations |
 
-## Research questions
+Every comparison holds the candidates, information, model, strategy knowledge, execution noise and fallback rule fixed across systems (see the fairness contract in [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) §2.3).
 
-1. **RQ1.** Given identical candidates and simulation information, do specialized agents win more games than a single LLM?
-2. **RQ2.** When does collaboration help most (offense, positioning, or defense), and is the benefit worth the extra inference cost?
-3. **RQ3.** How do access to the simulation tool and shot-execution noise affect the results?
+**Research questions.** RQ1: do specialized agents choose better shots and win more than a single LLM? RQ2: when does collaboration help (offense, position, defense), and is it worth the extra cost? RQ3: how do simulation access and execution noise change the answer?
 
-## Planned repository layout
+## Repository layout
 
 ```
-src/cuemind/     core logic: simulation, game rules, candidates, policies, LLM agents, evaluation
-demo/            interactive 2D demo (Streamlit) with per-agent reasoning traces
-experiments/     evaluation scripts and configs
-data/            positions benchmark and how it is generated
-results/         metrics, figures, logs
-docs/            execution plan, architecture, tutorial, progress log
-tests/           unit, integration, and demo smoke tests
+src/cuemind/
+  sim/          table state, stroke execution, noise, trajectories
+  game/         8-ball rules, break, ball in hand, game runner
+  candidates/   shot generation, simulation annotations (L0/L1/L2), pruning, descriptions
+  policies/     B0/B1/B2 bots, single agent, multi-agent, registry
+  agents/       LangGraph multi-agent graph, shared retry logic
+  llm/          Vertex client, response cache + budget, schemas, prompts (prompts/*.md)
+  eval/         tournaments, positions benchmark, oracle, metrics, statistics
+  viz/          2D table rendering (Plotly)
+demo/           Streamlit demo (app.py) and demo positions
+experiments/    experiment scripts and YAML configs
+data/           positions benchmark (see data/README.md)
+results/        experiment outputs (summaries committed; raw shot logs git-ignored)
+docs/           execution plan, architecture, decision log, progress log
+tests/          unit, integration and demo smoke tests
+scripts/        check_llm.py (live API check)
 ```
 
-## Setup (planned)
+Start with [`docs/architecture.md`](docs/architecture.md) (how a decision flows through the system), [`docs/decisions.md`](docs/decisions.md) (why things are the way they are) and [`docs/progress_log.md`](docs/progress_log.md) (what has been done and measured).
 
-- Python 3.12 with [uv](https://github.com/astral-sh/uv)
-- `pooltool-billiards==0.6.0` (needs the Panda3D archive index at install time)
-- Claude models through Google Cloud Vertex AI (`anthropic[vertex]`)
+## Setup
 
-Full install, demo, and experiment commands will be added here as the code lands. Credentials go in a local `.env` file (git-ignored) and must never be committed.
+Prerequisites: Python 3.12, [uv](https://github.com/astral-sh/uv), git. For live LLM runs: a Google Cloud project with Claude enabled on Vertex AI and a service-account key **stored outside this repository**.
 
-## Timeline
+```bash
+uv venv --python 3.12 .venv
+uv pip install --python .venv/Scripts/python.exe -r requirements.txt \
+    --extra-index-url https://archive.panda3d.org/simple/ --prerelease=allow --index-strategy unsafe-best-match
+uv pip install --python .venv/Scripts/python.exe -e .
+cp .env.example .env        # then fill in GOOGLE_APPLICATION_CREDENTIALS and GCP_PROJECT_ID
+```
 
-| Date | Milestone |
+On macOS/Linux use `.venv/bin/python` instead of `.venv/Scripts/python.exe`. On Windows set `PYTHONUTF8=1` (pooltool prints Unicode). The first simulation after installing takes up to a minute while Numba compiles; later processes take 2–3 s.
+
+## Quick start (no API key needed)
+
+```bash
+pytest -q                                              # unit, integration and demo smoke tests (offline)
+python -m cuemind.game.runner --p1 b2 --p2 b1 --games 1 # one full game between two bots
+streamlit run demo/app.py                              # demo; choose "Offline (fake LLM)" in the sidebar
+```
+
+## Live LLM check
+
+```bash
+python scripts/check_llm.py --quick   # one structured call (fractions of a cent)
+python scripts/check_llm.py           # plus one single-agent and one multi-agent decision
+```
+
+All LLM responses are cached in `results/cache/llm_cache.sqlite`, so re-running anything is free and exact. Every LLM experiment takes `--max-usd`; the run stops cleanly at the limit and resumes from the cache.
+
+## Experiments
+
+| Exp | What | Command |
+|---|---|---|
+| E0 | Bot tournaments (B2/B1/B0), 50 paired seeds | `python experiments/run_tournament.py --config experiments/configs/e0.yaml` |
+| E0b | Noise calibration (low/high) | `python experiments/run_tournament.py --config experiments/configs/e0_noise.yaml` |
+| Data | Build the positions benchmark | `python experiments/build_dataset.py --config experiments/configs/dataset.yaml` |
+| Pilot | Prompt iteration on the dev split | `python experiments/run_positions.py --config experiments/configs/dev_pilot.yaml --max-usd 2` |
+| E1 | Main decision-level comparison | `python experiments/run_positions.py --config experiments/configs/e1.yaml --max-usd 5` |
+| E4 | Simulation-access ablation (L0/L1/L2) | `python experiments/run_positions.py --config experiments/configs/e4.yaml --max-usd 5` |
+| E6 | Specialist ablations | `python experiments/run_positions.py --config experiments/configs/e6.yaml --max-usd 5` |
+| E10 | Decision variance (3 samples) | `python experiments/run_positions.py --config experiments/configs/e10.yaml --limit 30` |
+
+Add `--llm fake` to any positions experiment to run it offline. Tournaments and dataset building are CPU-only (no API cost); use `--workers` to match your machine (each worker needs ~0.5 GB of RAM). Results go to `results/<exp_id>/` (`summary.csv`, `games.jsonl` or `decisions.jsonl`, `config_used.json`).
+
+## Costs
+
+Simulation is free (CPU). LLM cost per decision is logged with token counts. Price estimates use `experiments/configs/prices.yaml` (Anthropic list prices; **Vertex AI prices are set separately and must be confirmed**). With Claude Haiku 5.5 the full study is expected to cost a few tens of US dollars; see `docs/EXECUTION_PLAN.md` Appendix C.
+
+## Troubleshooting
+
+| Problem | Fix |
 |---|---|
-| 2026-12-07 | Final presentation and live demo |
-| 2026-12-15 | Final report and repository due |
+| `No solution found ... panda3d` during install | Use the Panda3D archive index flags shown above |
+| `UnicodeEncodeError` on Windows | `set PYTHONUTF8=1` (or `PYTHONIOENCODING=utf-8`) |
+| `AttributeError: module 'httpx' has no attribute 'HTTPStatusError'` | A pre-release httpx was installed; `uv pip install "httpx==0.28.1"` |
+| HTTP 429 `Quota exceeded ... global_online_prediction_requests_per_base_model` | Request a Vertex AI quota increase for the Claude model, or wait and resume (runs resume from the cache) |
+| HTTP 404 `Publisher model ... not found` | The model is not enabled in that region/project; use `VERTEX_REGION=global` or enable the model |
+| `MemoryError` / "paging file is too small" | Too many worker processes for your RAM; lower `--workers` |
+| First run is very slow | Numba JIT compilation (once per install, ~1 min) |
+
+## Credits
+
+Physics: [pooltool](https://github.com/ekiefl/pooltool) (Apache-2.0, E. Kiefl). Pot geometry uses `pooltool.ai.pot`. Orchestration: LangGraph. Models: Claude via Google Cloud Vertex AI.
 
 ## References
 

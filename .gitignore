@@ -29,3 +29,6 @@ results/cache/
 Thumbs.db
 .idea/
 .vscode/
+
+# Per-experiment raw shot logs (large; summaries in games.jsonl are committed)
+results/**/raw/
