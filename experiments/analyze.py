@@ -170,6 +170,10 @@ def positions(md: list[str]) -> None:
             ax.set_xlabel("mean regret (oracle EIV units; lower is better)")
             ax.set_title(f"{exp}, information {lvl}", loc="left", fontsize=11, color=INK)
             style(ax)
+        top = max(t[4] for t in stats)
+        for ax in axes[0]:
+            ax.set_xlim(0, top * 1.22)
+        fig.subplots_adjust(wspace=0.6)
         md.append(f"\nFigure: `{save(fig, f'{exp}_regret')}`")
 
         # Figure: regret by situation tag (small multiples, one panel per tag).
@@ -191,6 +195,9 @@ def positions(md: list[str]) -> None:
             ax.set_title(f"{tag} situations", loc="left", fontsize=11, color=INK)
             style(ax)
         axes[1].set_xlabel(f"mean regret at {lvl} (lower is better)")
+        lim = max(ax.get_xlim()[1] for ax in axes)
+        for ax in axes:
+            ax.set_xlim(0, lim * 1.35)
         md.append(f"\nFigure: `{save(fig, f'{exp}_regret_by_situation')}`")
 
         # Figure: cost vs quality (LLM systems only).

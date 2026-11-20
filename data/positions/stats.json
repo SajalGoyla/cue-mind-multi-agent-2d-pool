@@ -1,0 +1,59 @@
+{
+  "dev": {
+    "n": 60,
+    "difficulty": {
+      "easy": 25,
+      "hard": 14,
+      "medium": 21
+    },
+    "source": {
+      "midgame_sample": 51,
+      "random": 9
+    },
+    "tags": {
+      "offense": 36,
+      "defense": 17,
+      "position": 9
+    },
+    "mean_candidates": 9.0
+  },
+  "test": {
+    "n": 180,
+    "difficulty": {
+      "easy": 60,
+      "medium": 60,
+      "hard": 60
+    },
+    "source": {
+      "random": 29,
+      "midgame_sample": 151
+    },
+    "tags": {
+      "offense": 91,
+      "position": 29,
+      "defense": 65
+    },
+    "mean_candidates": 8.11111111111111
+  },
+  "config": {
+    "seed": 0,
+    "n_dev": 60,
+    "n_test": 180,
+    "game_seed_start": 2000,
+    "per_game": 2,
+    "random_fraction": 0.2,
+    "noise": "medium",
+    "prep": {
+      "access_level": "L2",
+      "n_rollouts": 8
+    },
+    "oracle": {
+      "m": 24,
+      "horizon": 2,
+      "noise": "medium"
+    },
+    "workers": 10,
+    "out_dir": "data/positions"
+  },
+  "build_seconds": 957.9
+}

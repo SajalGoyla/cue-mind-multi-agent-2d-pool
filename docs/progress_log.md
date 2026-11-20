@@ -104,7 +104,23 @@ One entry per working session: what was done, how it was tested, where outputs a
 - Low 53 % [41, 65], high 52 % [39, 64]; with medium (E0) 54 %: no level separates B2 from B1 in games. Decision D-024: keep medium noise; the decision-level benchmark carries the main comparison.
 - Profiling: ~85 % of decision time is pooltool physics (D-024), so the long runs are inherent; work continues in parallel while they run.
 
+**Open / next** (superseded by the next entry)
+
+## 2026-11-20: Positions dataset and bot baselines (E1-bots)
+
+**Dataset** (`data/positions/`, `stats.json`; built in 16 min with 12 workers)
+- dev 60 (25 easy / 21 medium / 14 hard), test 180 (60 / 60 / 60); test sources: 151 sampled from B2-vs-B1 games, 29 random; 8.1 candidates per position on average.
+- Situation tags (test): offense 91, defense 65, position 29. The position-play subset is small; RQ2 conclusions about position play will have wide intervals (consider adding position-tagged hard cases).
+- 9 draft hard cases (`hard_cases.jsonl`), labels not yet reviewed.
+
+**E1-bots: decision-level baselines, test + hard cases (189 positions)** — `results/e1_bots/`, `results/summary.md`, `results/figures/e1_bots_regret*.png`
+- Mean regret (95 % bootstrap CI): B0 0.71 [0.60, 0.83]; B1 0.35 [0.29, 0.41]; B2 at L0 0.32, at L1 0.39, at L2 0.25. Top-1: B0 33 %, B1 50 %, B2-L2 62 %.
+- The benchmark discriminates decision quality (random < geometric < search), unlike game win rates (D-024).
+- RQ3 preview from the bots: a single noise-free preview (L1) makes B2 *worse* than geometry alone (over-confident outcomes), while noisy rollouts (L2) help. B0/B1 are identical across levels, as expected (they ignore the extra information).
+- B2's regret is lowest in position situations (0.18 vs B1 0.40), where leave quality matters.
+
 **Open / next**
-- Positions dataset build (running, ~35 min).
+- LLM experiments are blocked on the Vertex AI quota (see the Phase 5 entry). Once it is lifted: `scripts/check_llm.py`, the dev pilot and prompt iteration, freeze prompts (`git tag prompts-v1`), then E1, E4, E6, E10, E2.
+- Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
 - Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.

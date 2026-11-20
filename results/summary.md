@@ -29,3 +29,21 @@ Figure: `results/figures/e0_win_rates.png`
 Errors: 0 games; shot-cap draws: 0.
 
 Figure: `results/figures/e0_noise_win_rates.png`
+
+## e1_bots: decision-level results (`results/e1_bots/decisions.jsonl`)
+
+| system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
+|---|---|---|---|---|---|---|---|---|---|
+| b0 | L0 | 189 | 0.714 [0.604, 0.832] | 0.33 | -0.01 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b0 | L1 | 189 | 0.714 [0.605, 0.830] | 0.33 | -0.01 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b0 | L2 | 189 | 0.714 [0.604, 0.833] | 0.33 | -0.01 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b1 | L0 | 189 | 0.348 [0.287, 0.410] | 0.50 | 0.44 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b1 | L1 | 189 | 0.348 [0.287, 0.411] | 0.50 | 0.44 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b1 | L2 | 189 | 0.348 [0.288, 0.410] | 0.50 | 0.44 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L0 | 189 | 0.318 [0.261, 0.379] | 0.54 | 0.47 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L1 | 189 | 0.387 [0.324, 0.450] | 0.48 | 0.37 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L2 | 189 | 0.246 [0.200, 0.294] | 0.62 | 0.54 | 0.00 | 0.0 | 0.0000 | 0.0 |
+
+Figure: `results/figures/e1_bots_regret.png`
+
+Figure: `results/figures/e1_bots_regret_by_situation.png`

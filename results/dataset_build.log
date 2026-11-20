@@ -1,0 +1,64 @@
+sampled 485 unique states from 195 games + 96 random in 411s
+  annotated 20/485 (442s)
+  annotated 40/485 (465s)
+  annotated 60/485 (484s)
+  annotated 80/485 (513s)
+  annotated 100/485 (532s)
+  annotated 120/485 (562s)
+  annotated 140/485 (581s)
+  annotated 160/485 (600s)
+  annotated 180/485 (632s)
+  annotated 200/485 (650s)
+  annotated 220/485 (678s)
+  annotated 240/485 (693s)
+  annotated 260/485 (717s)
+  annotated 280/485 (731s)
+  annotated 300/485 (746s)
+  annotated 320/485 (768s)
+  annotated 340/485 (784s)
+  annotated 360/485 (801s)
+  annotated 380/485 (820s)
+  annotated 400/485 (844s)
+  annotated 420/485 (865s)
+  annotated 440/485 (891s)
+  annotated 460/485 (917s)
+  annotated 480/485 (950s)
+{
+  "dev": {
+    "n": 60,
+    "difficulty": {
+      "easy": 25,
+      "hard": 14,
+      "medium": 21
+    },
+    "source": {
+      "midgame_sample": 51,
+      "random": 9
+    },
+    "tags": {
+      "offense": 36,
+      "defense": 17,
+      "position": 9
+    },
+    "mean_candidates": 9.0
+  },
+  "test": {
+    "n": 180,
+    "difficulty": {
+      "easy": 60,
+      "medium": 60,
+      "hard": 60
+    },
+    "source": {
+      "random": 29,
+      "midgame_sample": 151
+    },
+    "tags": {
+      "offense": 91,
+      "position": 29,
+      "defense": 65
+    },
+    "mean_candidates": 8.11111111111111
+  },
+  "build_seconds": 957.9
+}
