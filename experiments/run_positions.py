@@ -63,6 +63,10 @@ def main(argv=None) -> int:
     exp_id = cfg["exp_id"]
     out = Path(a.out) if a.out else ROOT / "results" / exp_id
     out.mkdir(parents=True, exist_ok=True)
+    from experiments_common import git_commit  # noqa: E402
+
+    (out / "config_used.json").write_text(json.dumps(
+        {**cfg, "git_commit": git_commit(), "cli": vars(a)}, indent=2, default=str), encoding="utf-8")
     positions = []
     for p in cfg["positions"]:
         positions += load_positions(ROOT / p)
