@@ -1,0 +1,31 @@
+# Secrets: never commit credentials
+.env
+.env.*
+!.env.example
+*api-key*/
+*service-account*.json
+*credentials*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv-*/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+build/
+dist/
+
+# Large / generated outputs
+results/raw/
+results/cache/
+*.sqlite
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
