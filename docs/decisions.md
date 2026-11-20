@@ -25,6 +25,8 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-019 | 2026-11-20 | Positions benchmark: frozen annotated menus, oracle EIV, decision-level metrics | Accepted |
 | D-020 | 2026-11-20 | Demo: Streamlit + Plotly, offline / live / cache-only modes | Accepted |
 | D-021 | 2026-11-20 | Default 10 worker processes (memory bound) | Accepted |
+| D-022 | 2026-11-20 | Hand-made hard cases with oracle-drafted, human-reviewed labels | Accepted |
+| D-023 | 2026-11-20 | Budget exhaustion stops a game instead of falling back | Accepted |
 
 ---
 
@@ -165,3 +167,14 @@ Each entry records one design decision: the context, what we chose, the alternat
 
 - **Context.** The development machine has 32 logical CPUs but 15.7 GB RAM. E0 with 24 workers left < 1 GB free, and concurrently started processes failed with "paging file is too small" / `MemoryError`.
 - **Decision.** Configs default to 10 workers (each ~0.5 GB). Increase only on machines with more memory.
+
+## D-022: Hand-made hard cases
+
+- **Decision.** `data/positions/hard_cases.yaml` describes positions in diamond coordinates with a category (safety-only, shape trap, endgame, cluster, scratch risk, ball in hand) and the intended lesson. `experiments/build_hard_cases.py` builds benchmark records (48 oracle rollouts each), renders a PNG and an oracle table per case into `data/positions/hard_cases/`, and *drafts* labels: expected intent = the best-EIV shot's type; acceptable shots = within one standard error of the best. Labels stay `draft` until a team member reviews them and sets `reviewed_by`.
+- **Finding while drafting.** A position where the only legal ball is fully snookered (every straight line blocked) yields a one-option menu (the contact fallback, which fouls): the generator has **no kick shots** (cut-line, D-006). Such positions are excluded from the benchmark by the ≥ 2-candidate rule; in games they force a foul. This is a generator limitation to report (failure category "best shot not in menu").
+- **Consequences.** 9 draft cases exist (2 safety-only, 2 shape, 2 endgame, 1 cluster, 1 scratch risk, 1 ball in hand). The plan asks for ~25; more can be added to the YAML.
+
+## D-023: Budget exhaustion stops a game
+
+- **Context.** The runner turns any policy exception into the fallback shot (D-009). If the budget ran out mid-game, the rest of the game would silently be played by the fallback rule.
+- **Decision.** `BudgetExceeded` is re-raised by the runner; the game (or tournament job) stops and is resumed later from the response cache. Tested.

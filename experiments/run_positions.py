@@ -25,6 +25,7 @@ from cuemind.eval.positions import load_positions, menu_at_level, score_choice
 from cuemind.llm.cache import BudgetExceeded
 from cuemind.policies.base import DecisionContext
 from cuemind.policies.registry import make_policy
+from cuemind.sim.noise import rng_for
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -91,6 +92,7 @@ def main(argv=None) -> int:
         rec, name, lvl, rep = job
         state, cands = menu_at_level(rec, lvl)
         ctx = DecisionContext(state=state, candidates=cands, sample_idx=rep,
+                              rng=rng_for("positions", rec["position_id"], name, rep),
                               request_tag=f"{rec['position_id']}:{rep}")
         policy = policies[name]
         t0 = time.perf_counter()

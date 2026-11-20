@@ -20,6 +20,7 @@ from cuemind.candidates.pipeline import PrepConfig, prepare
 from cuemind.game.ball_in_hand import resolve_ball_in_hand
 from cuemind.game.break_shot import break_stroke
 from cuemind.game.rules import Call, advance, judge
+from cuemind.llm.cache import BudgetExceeded
 from cuemind.policies.base import Decision, DecisionContext, Policy, fallback_choice
 from cuemind.sim.execute import extract_events, simulate, warm_up
 from cuemind.sim.noise import get_noise, rng_for
@@ -64,6 +65,8 @@ def _decide_safely(policy: Policy, ctx: DecisionContext) -> Decision:
             return d
         err = f"unknown shot_id {d.shot_id!r}"
         trace, usage = d.trace, d.usage
+    except BudgetExceeded:
+        raise  # stop the game; the run resumes later from the response cache
     except Exception as exc:  # noqa: BLE001
         err = f"{type(exc).__name__}: {exc}"
         trace, usage = {"traceback": traceback.format_exc(limit=3)}, {}
@@ -154,6 +157,8 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
                 status, winner = "finished", j.winner
                 break
             state = advance(state, j, cue_after, balls_after)
+    except BudgetExceeded:
+        raise
     except Exception as exc:  # noqa: BLE001 - record and surface, never hang a tournament
         status, error = "error", f"{type(exc).__name__}: {exc}\n{traceback.format_exc(limit=5)}"
 

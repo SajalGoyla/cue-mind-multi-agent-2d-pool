@@ -67,3 +67,21 @@ def test_short_l2_game_with_search_bot():
     dec = [r for r in res.records if r["kind"] == "decision"]
     assert dec and all(c["rollouts"] is not None for r in dec for c in r["candidates"])
     assert any("ev" in r["trace"] for r in dec if r["system"] == "B2_search")
+
+
+class Broke:
+    name = "broke"
+
+    def decide(self, ctx):
+        from cuemind.llm.cache import BudgetExceeded
+
+        raise BudgetExceeded("out of budget")
+
+
+def test_budget_exhaustion_stops_the_game_instead_of_falling_back():
+    import pytest
+
+    from cuemind.llm.cache import BudgetExceeded
+
+    with pytest.raises(BudgetExceeded):
+        play_game({"P1": Broke(), "P2": GeometricBot()}, seed=1, prep=L0, max_shots=5)

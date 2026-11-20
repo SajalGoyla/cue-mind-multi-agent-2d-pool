@@ -1,0 +1,80 @@
+# Hand-made hard cases (plan section 9.4). Coordinates in DIAMONDS:
+# x from 0 (left rail) to 4 (right rail), y from 0 (bottom rail) to 8 (top rail).
+# Shooter is always P1. Build with:  python experiments/build_hard_cases.py
+#
+# STATUS: DRAFTS. `intended` says what the case is meant to test. The builder proposes
+# expected_intent / acceptable_shot_ids from the oracle; a team member must inspect the
+# rendered PNG (data/positions/hard_cases/) and the oracle table, then set `reviewed_by`.
+# Unreviewed cases must not be used for reported results.
+cases:
+  - id: hard_safety_01
+    category: safety_only
+    intended: "Own ball 2 is visible but its pocket paths are blocked by stripes; every pot is low-percentage."
+    groups: {P1: solids, P2: stripes}
+    cue: [2.0, 1.5]
+    balls: {"2": [0.6, 7.2], "10": [0.3, 7.6], "12": [1.6, 7.6], "11": [0.15, 5.6], "8": [3.2, 5.0], "13": [2.6, 3.0]}
+    reviewed_by: null
+
+  - id: hard_safety_02
+    category: safety_only
+    intended: "Only own ball 5 sits mid-table with both nearby pocket paths blocked; opponent has two easy balls left."
+    groups: {P1: solids, P2: stripes}
+    cue: [3.5, 0.6]
+    balls: {"5": [1.0, 5.0], "9": [0.45, 4.35], "14": [0.5, 6.0], "15": [3.7, 7.6], "8": [2.6, 6.2]}
+    reviewed_by: null
+
+  - id: hard_shape_01
+    category: shape_trap
+    intended: "Easiest pot (1, straight into bottom-left) leaves no shot on the 3; a slightly harder cut on 3 leaves 1 easy."
+    groups: {P1: solids, P2: stripes}
+    cue: [1.0, 2.0]
+    balls: {"1": [0.5, 1.0], "3": [3.0, 6.5], "9": [2.2, 5.0], "12": [3.4, 3.2], "8": [1.8, 7.0]}
+    reviewed_by: null
+
+  - id: hard_shape_02
+    category: shape_trap
+    intended: "Two pots of similar difficulty; one sends the cue ball to the rail behind the 8."
+    groups: {P1: stripes, P2: solids}
+    cue: [2.0, 3.0]
+    balls: {"10": [1.0, 5.0], "13": [3.0, 5.2], "8": [2.0, 7.4], "4": [0.6, 2.0], "6": [3.4, 1.4]}
+    reviewed_by: null
+
+  - id: hard_endgame_01
+    category: endgame
+    intended: "Shooter is on the 8 with a moderate cut; opponent also has only the 8 left."
+    groups: {P1: solids, P2: stripes}
+    cue: [1.5, 3.0]
+    balls: {"8": [2.6, 6.0]}
+    reviewed_by: null
+
+  - id: hard_endgame_02
+    category: endgame
+    intended: "Opponent is on the 8; shooter has three balls left, one of them a risky long pot."
+    groups: {P1: solids, P2: stripes}
+    cue: [2.0, 1.0]
+    balls: {"1": [0.4, 7.4], "4": [2.8, 4.6], "7": [3.6, 6.9], "8": [1.5, 5.5]}
+    reviewed_by: null
+
+  - id: hard_cluster_01
+    category: cluster
+    intended: "Own balls 5 and 6 are clustered with a stripe; one pot breaks the cluster, another ignores it."
+    groups: {P1: solids, P2: stripes}
+    cue: [2.0, 2.0]
+    balls: {"5": [2.0, 6.0], "6": [2.25, 6.0], "11": [2.125, 6.22], "2": [0.7, 4.2], "8": [3.4, 7.2], "14": [3.5, 2.5]}
+    reviewed_by: null
+
+  - id: hard_scratch_01
+    category: scratch_risk
+    intended: "Natural pot of 3 into the corner sends the cue ball towards the side pocket at medium speed."
+    groups: {P1: solids, P2: stripes}
+    cue: [2.2, 2.6]
+    balls: {"3": [0.8, 5.6], "6": [3.3, 6.8], "10": [1.2, 1.2], "8": [3.0, 4.6]}
+    reviewed_by: null
+
+  - id: hard_bih_01
+    category: ball_in_hand
+    intended: "After an opponent foul: the placement is shared code; which ball to play first matters."
+    groups: {P1: stripes, P2: solids}
+    ball_in_hand: true
+    balls: {"9": [0.5, 7.5], "12": [3.5, 0.5], "15": [2.0, 4.1], "1": [2.1, 4.5], "3": [1.0, 2.0], "8": [3.0, 6.0]}
+    reviewed_by: null

@@ -27,7 +27,7 @@
       "access_level": "L2",
       "n_rollouts": 8
     },
-    "workers": 24
+    "workers": 10
   },
   "seeds": [
     1000,
@@ -81,7 +81,7 @@
     1048,
     1049
   ],
-  "git_commit": "2519dce",
+  "git_commit": "bb49977",
   "prep": {
     "access_level": "L2",
     "n_rollouts": 8,

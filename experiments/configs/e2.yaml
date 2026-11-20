@@ -1,0 +1,16 @@
+# E2: main game-level comparison (RQ1). Full racks from the break, paired seeds,
+# both seat orders, common random numbers. LLM policies share one budget ledger.
+# Offline check: add  llm: fake  under each policy below (or use --seeds 1).
+exp_id: e2
+pairings:
+  - [ma, sa]
+  - [sa, b2]
+  - [ma, b2]
+seeds: {start: 3000, count: 25}
+noise_levels: [medium]
+max_shots: 150
+prep: {access_level: L2, n_rollouts: 8}
+workers: 4
+policy_kwargs:
+  sa: {run_id: e2, max_usd: 20}
+  ma: {run_id: e2, max_usd: 20}

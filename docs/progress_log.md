@@ -79,6 +79,28 @@ One entry per working session: what was done, how it was tested, where outputs a
 - New tests: oracle determinism and sanity (a hanging pot is worth more than any safety), frozen-menu information hiding by access level, scoring, random positions validity, tags; demo smoke test (offline end to end).
 - The tournament integration test failed twice with `MemoryError` while E0 was using the machine (environmental, D-021); to be re-run after E0.
 
+**Open / next** (superseded by the next entry)
+
+## 2026-11-20: E0 results, hard cases, fixes
+
+**E0: bot tournaments, medium noise, L2 menus, 50 paired seeds (100 games per pairing)** — `results/e0/`, `results/summary.md`, `results/figures/e0_win_rates.png`
+- All 300 games finished (0 errors after the D-014 fix and a resume; 0 shot-cap draws); 20–23 shots per game; ~1 foul per player per game.
+- B2 vs B1: 54 % [44, 63], paired seed score +0.08, sign-test p = 0.56 (not significant).
+- B2 vs B0: 79 % [70, 86], p < 0.001. B1 vs B0: 61 % [51, 70], p = 0.06.
+- Pot success: B2 0.61, B1 0.53, B0 0.43–0.47. B2 plays safeties 17–20 % of the time.
+- **Interpretation.** At medium noise game outcomes are dominated by execution luck: even random choice wins 21–39 %, and the strong search bot cannot be separated from the simple geometric bot in 100 games. Game-level comparisons between LLM systems (E2) will therefore have low power at this noise level; the decision-level benchmark (E1) must carry the main comparison, as planned. Next: E0b calibrates low/high noise before the dataset is built, because the dataset's annotations and oracle depend on the noise level.
+
+**Other work**
+- 9 draft hard cases with rendered PNGs and oracle tables (`data/positions/hard_cases/`, D-022); labels need human review.
+- Offline end-to-end check of the positions runner on the hard cases (bots + FakeLLM SA/MA/SA-vote at L0 and L2): all summary columns produced.
+- Fixes: budget exhaustion now stops a game (D-023); B0 in the positions runner now gets a per-position random stream (it previously always picked the same menu slot).
+- `experiments/analyze.py` regenerates `results/summary.md` and figures (palette validated for colour-vision deficiency; every bar carries a direct label).
+- E2 config (`experiments/configs/e2.yaml`) ready for when LLM access works.
+
+**Tested**
+- Full suite: 65 tests pass (`pytest -q`, ~2 min).
+
 **Open / next**
-- Finish E0; re-run full test suite; build the positions dataset; offline pilot of the positions runner.
-- Waiting on the Vertex AI quota to run any LLM experiment.
+- E0b (running): B2 vs B1 at low and high noise; choose the main noise level.
+- Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
+- Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
