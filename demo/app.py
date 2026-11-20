@@ -75,6 +75,24 @@ def get_policies(mode: str):
 def load_demo_positions() -> dict[str, dict]:
     data = json.loads((ROOT / "demo" / "sample_inputs.json").read_text(encoding="utf-8"))
     out = {p["name"]: {"state": p["state"]} for p in data["positions"]}
+    records = {}
+    for f in ("test.jsonl", "hard_cases.jsonl"):
+        path = ROOT / "data" / "positions" / f
+        if path.exists():
+            records.update({r["position_id"]: r for r in load_positions(path)})
+    runs = ROOT / "results" / "demo_assets" / "sample_runs.json"
+    if runs.exists():  # sample runs picked from real experiment logs (scripts/export_demo_assets.py)
+        for run in json.loads(runs.read_text(encoding="utf-8"))["runs"]:
+            rec = records.get(run["position_id"])
+            entry = {"state": run["state"]}
+            if rec is not None:
+                entry["record"] = rec
+            out[f"{run['slot']} ({run['position_id']}, from {runs.parent.parent.name} logs)"] = entry
+    hard = ROOT / "data" / "positions" / "hard_cases.jsonl"
+    if hard.exists():
+        for rec in load_positions(hard):
+            out[f"Hard case {rec['position_id']} ({rec.get('label_status', 'draft')})"] = {
+                "state": rec["state"], "record": rec}
     test = ROOT / "data" / "positions" / "test.jsonl"
     if test.exists():
         for rec in load_positions(test)[:40]:
