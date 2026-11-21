@@ -74,14 +74,14 @@ Figure: `results/figures/dev_pilot_r1_cost_quality.png`
 
 | system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
 |---|---|---|---|---|---|---|---|---|---|
-| ma | L2 | 1 | 0.621 [0.621, 0.621] | 0.00 | 0.15 | 0.00 | 4.0 | 0.0000 | 0.0 |
-| sa | L2 | 3 | 0.346 [0.076, 0.887] | 0.67 | 0.53 | 0.00 | 1.0 | 0.0000 | 2.9 |
+| ma | L2 | 90 | 0.367 [0.282, 0.454] | 0.54 | 0.60 | 0.00 | 4.0 | 0.0000 | 21.4 |
+| sa | L2 | 90 | 0.287 [0.215, 0.364] | 0.64 | 0.68 | 0.00 | 1.0 | 0.0000 | 1.9 |
 
 Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
 
 | info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
 |---|---|---|---|---|---|---|
-| L2 | sa | 1 | +0.546 | 1 | 1 | +1.00 |
+| L2 | sa | 30 | +0.097 | 0.25 | 0.25 | +0.47 |
 
 Figure: `results/figures/e10_regret.png`
 
@@ -185,6 +185,13 @@ Figure: `results/figures/e4_regret.png`
 Figure: `results/figures/e4_regret_by_situation.png`
 
 Figure: `results/figures/e4_cost_quality.png`
+
+## e10: decision variance (`results/e10/decisions.jsonl`)
+
+| system | positions | all samples agree | distinct choices / position | within-position regret SD | mean regret per sample |
+|---|---|---|---|---|---|
+| ma | 30 | 50% | 1.57 | 0.168 | 0.364, 0.285, 0.452 |
+| sa | 30 | 67% | 1.33 | 0.121 | 0.267, 0.238, 0.356 |
 
 ## Prompt iteration on the dev split (`results/prompt_iterations.csv`)
 

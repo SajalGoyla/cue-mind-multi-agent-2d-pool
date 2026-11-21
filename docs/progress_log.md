@@ -179,7 +179,9 @@ One entry per working session: what was done, how it was tested, where outputs a
 - Noisy-rollout statistics are what make the LLMs competitive; a single perfect-stroke preview does not help SA and hurts B2.
 - H4 predicted the MA–SA gap would shrink without simulation; instead it is largest at L0. Interpretation: specialists with little information produce weaker reports, and the coordinator compounds errors.
 
-**Queue:** E10 running, then E2, E5, E6, E3, E9.
+**E10 (decision variance, 30 positions × 3 samples):** SA all-agree 67 %, MA 50 %; distinct choices 1.33 vs 1.57; within-position regret SD 0.121 vs 0.168; per-sample mean regret SA 0.27/0.24/0.36, MA 0.36/0.29/0.45. Run-to-run variation (~0.1 on 30 positions) dwarfs the E1 SA–MA difference.
+
+**Queue:** E2 running (started 23:37), then E5, E6, E3, E9.
 
 **Open / next**
 - Categorise the hand-read failure cases (fill in `docs/failure_analysis_e1.md`).

@@ -239,6 +239,19 @@ def main() -> None:
           "Do not edit by hand."]
     tournaments(md)
     positions(md)
+    var = ROOT / "results" / "e10" / "decisions.jsonl"
+    if var.exists():  # E10: decision variance across independent samples
+        d = pd.DataFrame([json.loads(x) for x in var.read_text(encoding="utf-8").splitlines() if x.strip()])
+        md += ["\n## e10: decision variance (`results/e10/decisions.jsonl`)\n",
+               "| system | positions | all samples agree | distinct choices / position | within-position regret SD | mean regret per sample |",
+               "|---|---|---|---|---|---|"]
+        for s, g in d.groupby("system_key"):
+            full = g.groupby("position_id").filter(lambda x: x.repeat.nunique() == g.repeat.nunique())
+            per = full.groupby("position_id")
+            agree = (per.shot_id.nunique() == 1).mean()
+            per_rep = ", ".join(f"{v:.3f}" for v in full.groupby("repeat").regret.mean())
+            md.append(f"| {s} | {per.ngroups} | {agree:.0%} | {per.shot_id.nunique().mean():.2f} | "
+                      f"{per.regret.std(ddof=0).mean():.3f} | {per_rep} |")
     it = ROOT / "results" / "prompt_iterations.csv"
     if it.exists():
         df = pd.read_csv(it)

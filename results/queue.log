@@ -9,3 +9,7 @@
 2026-11-20 23:18:39 watchdog: restart 2 done (RSS now 744 MB)
 2026-11-20 23:19:39 end e4: exit 0 after 44.3 min
 2026-11-20 23:19:39 start e10: experiments/run_positions.py --config experiments/configs/e10.yaml --limit 30 --threads 2
+2026-11-20 23:30:50 watchdog: llama-server RSS 3563 MB > 3500 MB, restarting Ollama
+2026-11-20 23:31:36 watchdog: restart 3 done (RSS now 934 MB)
+2026-11-20 23:37:11 end e10: exit 0 after 17.5 min
+2026-11-20 23:37:11 start e2: experiments/run_tournament.py --config experiments/configs/e2.yaml --workers 2
