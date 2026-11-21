@@ -1,0 +1,8 @@
+# Dev-split pilot, prompt round 1 (B2 unchanged from round 0).
+exp_id: dev_pilot_r1
+positions: [data/positions/dev.jsonl]
+systems: [sa, ma]
+access_levels: [L2]
+repeats: 1
+threads: 4
+llm: {llm: ollama}   # local model; use {llm: claude, max_usd: N} for Vertex

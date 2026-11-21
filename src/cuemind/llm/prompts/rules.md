@@ -18,4 +18,9 @@ Each candidate has an id (S01, S02, ...) and a one-line description. Depending o
 - statistics over several realistic (imperfect) strokes: how often the shot pots the called ball, scratches, or fouls; where the cue ball usually ends; how easy my next shot is if I keep the turn; how good the opponent's best shot is if the turn passes (1.00 means ball in hand or a lost game).
 Strokes are imperfect, so even easy-looking shots can miss.
 
+## How to weigh a shot
+- Pot probability comes first: a missed pot usually hands the table to the opponent. When one shot pots clearly more often than another (more than about 15 percentage points), it is usually the better shot.
+- Use the cue-ball leave (next shot) and the opponent's chances to decide between shots whose pot probabilities are similar.
+- A safety is right only when no pot is reasonably likely (roughly below 40-50%) or when missing would be very costly, for example when the opponent is on the 8.
+
 Choose only from the listed shot ids. Never invent a shot.

@@ -1,0 +1,4 @@
+round,prompt_version,system,n,mean_regret,top1,safety_rate,fallback_rate,mean_latency_s,change
+0,-,b2,60,0.359,0.467,0.133,0.0,0.0,initial prompts
+0,116380aaf083,sa,60,0.412,0.45,0.333,0.0,14.0,initial prompts
+0,116380aaf083,ma,60,0.423,0.467,0.317,0.0,42.8,initial prompts
