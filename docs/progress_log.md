@@ -164,6 +164,8 @@ One entry per working session: what was done, how it was tested, where outputs a
 
 **Also added:** E3 (games from mid-game positions, `build_midgame_jobs`), configs for E8 (Claude, uses credits — run only on request) and E9 (critic); E3/E9 appended to the queue definition; report results draft (`docs/report_draft_results.md`).
 
+**Memory management (D-026–D-028):** the Ollama runner leaks RAM during long runs; the queue now runs at concurrency 2 with a watchdog that restarts Ollama above 3.5 GB runner RSS, and the client retries infrastructure failures so restarts never turn into fallback decisions. E4 was stopped cleanly at 678 / 1,620 decisions and resumed under the new setup.
+
 **Open / next**
 - Categorise the hand-read failure cases (fill in `docs/failure_analysis_e1.md`).
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.

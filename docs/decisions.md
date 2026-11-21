@@ -31,6 +31,7 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-025 | 2026-11-20 | Local open-weight model (Qwen 2.5 7B via Ollama) for the main LLM experiments | Accepted |
 | D-026 | 2026-11-20 | LLM experiments at concurrency 2 (Ollama 2 slots, model fully in VRAM) | Accepted |
 | D-027 | 2026-11-20 | Retry local-model infrastructure failures instead of recording fallbacks | Accepted |
+| D-028 | 2026-11-20 | Watchdog restarts Ollama when its runner's RAM exceeds 3.5 GB | Accepted |
 
 ---
 
@@ -209,3 +210,10 @@ Each entry records one design decision: the context, what we chose, the alternat
 - **Context.** If the Ollama server restarts or is briefly unavailable, a request fails; the agents would retry once and then use the fallback rule, and the resulting decision would be recorded (and skipped on resume) as an LLM fallback, biasing the fallback rate and regret.
 - **Decision.** `OllamaClient` retries connection errors, timeouts and HTTP 5xx with backoff (5–30 s, about 3 minutes in total) before reporting an error. Model-level problems (invalid JSON, schema mismatch, truncated output) are not retried here; they go through the normal one-corrective-retry → fallback path.
 - **Memory note.** During E4, Ollama's `llama-server` held ~3.8 GB of RAM (mapped model file) and ~9.7 GB committed while the model ran fully in VRAM; free RAM fell from 8 GB to ~3 GB over the first 40 minutes and then stayed flat. Loading without memory mapping was considered but not adopted mid-run (unverified, would force a model reload).
+
+## D-028: Ollama watchdog
+
+- **Context.** The Ollama runner (`llama-server`) kept growing in system RAM during long runs (3.7 → 5.1 GB RSS, 9.6 → 11.3 GB committed in ~15 minutes) although the model was entirely in VRAM; available RAM fell to ~2 GB. Left alone this would exhaust memory overnight (the first queue was already stopped once by Claude Code's memory guard).
+- **Decision.** `scripts/ollama_watchdog.py` checks the runner's RSS every 60 s and, above 3.5 GB, kills and restarts `ollama serve` (2 slots) and reloads the model. `scripts/run_queue.py --watchdog-mb 3500` (default) runs it as a background thread. Restart tested: runner RSS 5,160 → 741 MB, available RAM 2.1 → 7.1 GB.
+- **Why it is safe for results.** Requests in flight during a restart fail at the HTTP level and are retried by the client (D-027); they never reach the agents' fallback path. Restart times are logged in `results/queue.log`. Decisions are unaffected: generation is seeded and model weights are identical.
+- **Procedure note.** The queue was stopped cleanly at 678 / 1,620 E4 decisions (all saved) to switch to the new client code, then resumed.

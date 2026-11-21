@@ -45,7 +45,15 @@ def main() -> int:
     ap.add_argument("--only", default=None, help="comma-separated subset of step names")
     ap.add_argument("--concurrency", type=int, default=2,
                     help="threads per positions run / workers per tournament (memory-bound; D-026)")
+    ap.add_argument("--watchdog-mb", type=float, default=3500,
+                    help="restart Ollama when its runner exceeds this RSS (0 = off; D-028)")
     a = ap.parse_args()
+    if a.watchdog_mb > 0:
+        sys.path.insert(0, str(Path(__file__).parent))
+        from ollama_watchdog import Watchdog
+
+        Watchdog(a.watchdog_mb, period_s=60, parallel=a.concurrency, log=log).start()
+        log(f"Ollama watchdog on (limit {a.watchdog_mb:.0f} MB)")
     if a.wait_for:
         run_log = ROOT / "results" / f"{a.wait_for}_run.log"
         log(f"waiting for {run_log.name} to finish")
