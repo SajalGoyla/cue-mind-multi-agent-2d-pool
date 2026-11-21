@@ -6,7 +6,7 @@ pairings:
   - [ma, sa]
   - [sa, b2]
   - [ma, b2]
-seeds: {start: 3000, count: 25}
+seeds: {start: 3000, count: 15}   # 15 paired seeds: plan minimum; local LLM games take 5-10 min each
 noise_levels: [medium]
 max_shots: 150
 prep: {access_level: L2, n_rollouts: 8}
