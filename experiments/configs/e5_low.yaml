@@ -1,0 +1,9 @@
+# E5: noise ablation (RQ3). Test positions re-annotated at low noise (experiments/reannotate.py).
+# Compare with E1 (medium) for the same systems.
+exp_id: e5_low
+positions: [data/positions/test_noise_low.jsonl]
+systems: [b1, b2, sa, ma]
+access_levels: [L2]
+repeats: 1
+threads: 4
+llm: {llm: ollama}
