@@ -160,8 +160,12 @@ One entry per working session: what was done, how it was tested, where outputs a
 
 **Running (queue, `results/queue.log`):** E4 → E10 → E2 (15 paired seeds) → E5 (low/high) → E6 → analyze. The first queue was stopped by Claude Code's memory guard (system RAM critically low) after 33 E4 decisions; restarted at concurrency 2 with Ollama at 2 slots so the model fits entirely in VRAM (D-026); the 33 finished decisions are kept.
 
+**Error categories** (`experiments/categorize_errors.py`, regret > 0.3): errors B2 54, SA 65, SA-vote 64, MA 69; wrong spin/speed variant 26 for each LLM system; wrong target/pocket (leave misjudged) MA 35 vs SA 28; needless safeties 1 per LLM system after the prompt fix. In 21 of MA's 69 errors a specialist had named the oracle's best shot but the coordinator followed another (aggregation failure).
+
+**Also added:** E3 (games from mid-game positions, `build_midgame_jobs`), configs for E8 (Claude, uses credits — run only on request) and E9 (critic); E3/E9 appended to the queue definition; report results draft (`docs/report_draft_results.md`).
+
 **Open / next**
-- Categorise the failure cases (fill in `docs/failure_analysis_e1.md`).
+- Categorise the hand-read failure cases (fill in `docs/failure_analysis_e1.md`).
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
 - Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.

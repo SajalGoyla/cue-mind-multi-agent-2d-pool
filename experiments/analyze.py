@@ -152,6 +152,21 @@ def positions(md: list[str]) -> None:
             for (lvl, other, n, diff, p, r), pa in zip(tests, adj):
                 md.append(f"| {lvl} | {other} | {n} | {diff:+.3f} | {p:.3g} | {pa:.3g} | {r:+.2f} |")
 
+        cats = ROOT / "results" / exp / "error_categories.csv"
+        if cats.exists():  # from experiments/categorize_errors.py
+            c = pd.read_csv(cats)
+            tab = pd.crosstab(c.system, c.category)
+            cols = [k for k in tab.columns if k != "ok"]
+            md.append(f"\nError categories (regret > 0.3; `results/{exp}/error_categories.csv`):\n")
+            md.append("| system | errors | " + " | ".join(cols) + " |")
+            md.append("|---|---|" + "---|" * len(cols))
+            for s, r in tab.iterrows():
+                md.append(f"| {s} | {int(r[cols].sum())} | " + " | ".join(str(int(r[k])) for k in cols) + " |")
+            ma = c[c.system.str.startswith("ma") & (c.category != "ok")]
+            if len(ma):
+                md.append(f"\nMA errors where a specialist named the best shot but the coordinator "
+                          f"followed another: {int(ma.wrong_specialist.fillna(False).astype(bool).sum())} of {len(ma)}.")
+
         # Figure: mean regret per system (one panel per access level).
         levels = sorted(df.access_level.unique())
         fig, axes = plt.subplots(1, len(levels), figsize=(5.2 * len(levels), 0.5 * df.system_key.nunique() + 1.4),

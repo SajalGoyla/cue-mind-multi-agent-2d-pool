@@ -89,6 +89,19 @@ Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon si
 | L2 | sa-vote | 180 | +0.011 | 0.862 | 1 | +0.02 |
 | L2 | b2 | 180 | +0.066 | 0.0169 | 0.0508 | +0.31 |
 
+Error categories (regret > 0.3; `results/e1/error_categories.csv`):
+
+| system | errors | lower_pot | needless_safety | other_target | pot_over_safety | scratch_risk | variant |
+|---|---|---|---|---|---|---|---|
+| b0 | 108 | 13 | 18 | 31 | 1 | 24 | 21 |
+| b1 | 70 | 7 | 0 | 21 | 1 | 13 | 28 |
+| b2 | 54 | 0 | 0 | 20 | 4 | 6 | 24 |
+| ma | 69 | 0 | 1 | 35 | 3 | 4 | 26 |
+| sa | 65 | 0 | 1 | 28 | 5 | 5 | 26 |
+| sa-vote | 64 | 0 | 1 | 27 | 4 | 6 | 26 |
+
+MA errors where a specialist named the best shot but the coordinator followed another: 21 of 69.
+
 Figure: `results/figures/e1_regret.png`
 
 Figure: `results/figures/e1_regret_by_situation.png`
@@ -112,6 +125,37 @@ Figure: `results/figures/e1_cost_quality.png`
 Figure: `results/figures/e1_bots_regret.png`
 
 Figure: `results/figures/e1_bots_regret_by_situation.png`
+
+## e4: decision-level results (`results/e4/decisions.jsonl`)
+
+| system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
+|---|---|---|---|---|---|---|---|---|---|
+| b2 | L0 | 14 | 0.417 [0.169, 0.699] | 0.50 | 0.62 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L1 | 14 | 0.609 [0.333, 0.890] | 0.36 | 0.28 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L2 | 14 | 0.210 [0.078, 0.368] | 0.64 | 0.76 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| ma | L0 | 14 | 0.594 [0.336, 0.863] | 0.43 | 0.44 | 0.00 | 4.0 | 0.0000 | 31.7 |
+| ma | L1 | 14 | 0.616 [0.309, 0.952] | 0.36 | 0.36 | 0.00 | 4.0 | 0.0000 | 32.6 |
+| ma | L2 | 14 | 0.298 [0.143, 0.469] | 0.50 | 0.67 | 0.00 | 4.0 | 0.0000 | 0.0 |
+| sa | L0 | 15 | 0.468 [0.241, 0.717] | 0.40 | 0.52 | 0.00 | 1.0 | 0.0000 | 5.2 |
+| sa | L1 | 15 | 0.767 [0.405, 1.258] | 0.33 | 0.36 | 0.00 | 1.0 | 0.0000 | 4.2 |
+| sa | L2 | 15 | 0.370 [0.169, 0.606] | 0.53 | 0.58 | 0.00 | 1.0 | 0.0000 | 0.0 |
+
+Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
+
+| info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
+|---|---|---|---|---|---|---|
+| L0 | sa | 14 | +0.131 | 0.625 | 1 | +0.20 |
+| L0 | b2 | 14 | +0.177 | 0.413 | 1 | +0.30 |
+| L1 | sa | 14 | -0.167 | 0.734 | 1 | -0.16 |
+| L1 | b2 | 14 | +0.007 | 0.638 | 1 | -0.18 |
+| L2 | sa | 14 | -0.060 | 1 | 1 | -0.33 |
+| L2 | b2 | 14 | +0.087 | 0.5 | 1 | +0.67 |
+
+Figure: `results/figures/e4_regret.png`
+
+Figure: `results/figures/e4_regret_by_situation.png`
+
+Figure: `results/figures/e4_cost_quality.png`
 
 ## Prompt iteration on the dev split (`results/prompt_iterations.csv`)
 
