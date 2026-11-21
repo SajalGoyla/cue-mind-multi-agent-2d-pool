@@ -54,11 +54,11 @@ sim.execute.simulate() ─► extract_events() ─► rules.judge() ─► rules
 | `policies/multi_agent.py` | MA, MA+critic, MA ablations | `MultiAgent` |
 | `agents/graph_multi.py` | LangGraph fan-out/fan-in graph | `build_graph`, `MAState` |
 | `agents/common.py` | id validation with one corrective retry; usage totals | `call_with_id_check`, `sum_usage` |
-| `llm/client.py` | Claude on Vertex, FakeLLM, cost accounting | `ClaudeVertexClient`, `FakeLLM`, `LLMResult`, `cost_usd` |
+| `llm/client.py` | Local model via Ollama (default, D-025), Claude on Vertex, FakeLLM, cost accounting | `OllamaClient`, `ClaudeVertexClient`, `FakeLLM`, `LLMResult`, `cost_usd` |
 | `llm/cache.py` | SQLite response cache and spending ledger | `ResponseCache`, `Budget`, `BudgetExceeded` |
 | `llm/schemas.py` | Structured-output schemas | `SingleDecision`, `SpecialistReport`, `CoordinatorDecision`, `CriticVerdict` |
 | `llm/promptlib.py` + `llm/prompts/*.md` | Prompt text and assembly | `system_single`, `system_specialist`, `decision_context_text`, `prompt_version` |
-| `eval/tournament.py` | Paired, resumable, parallel tournaments | `build_jobs`, `run_tournament` |
+| `eval/tournament.py` | Paired, resumable, parallel tournaments, from the break or from benchmark positions (E3) | `build_jobs`, `build_midgame_jobs`, `run_tournament` |
 | `eval/metrics.py` | Per-seat game metrics, pairing summaries | `seat_metrics`, `pairing_summary` |
 | `eval/stats.py` | Wilson, bootstrap, sign test, Wilcoxon, Holm | |
 
@@ -97,9 +97,22 @@ DecisionContext ──► promptlib.decision_context_text()   position summary +
           ├ system_specialist(position) ─► SpecialistReport ┼─► system_coordinator ─► CoordinatorDecision ─► (critic)
           └ system_specialist(safety)   ─► SpecialistReport ┘
                      │
-   every call: cache lookup → budget check → messages.parse (structured output, cached system prompt)
+   every call: cache lookup → (Claude: budget check) → structured output (Ollama: JSON-schema `format`;
+               Claude: messages.parse with cached system prompt)
                → id check (one corrective retry) → shared fallback if still invalid
                      │
    Decision.trace: prompt version, every attempt (parsed output, tokens, latency, cache hit), reports,
                    followed/overruled specialists, critic verdict  → logged per shot, shown in the demo
 ```
+
+## 9. Experiment tooling
+
+| Script | Purpose |
+|---|---|
+| `experiments/run_tournament.py` | Paired games (E0, E0b, E2, E3) |
+| `experiments/build_dataset.py`, `build_hard_cases.py`, `reannotate.py` | Positions benchmark, hand-made cases, re-annotation at other noise levels (E5) |
+| `experiments/run_positions.py` | Decision-level experiments (E1, E4, E5, E6, E9, E10, dev pilots) |
+| `experiments/analyze.py` | All tables and figures → `results/summary.md`, `results/figures/` |
+| `experiments/categorize_errors.py`, `failure_cases.py` | Rule-based error categories; hand-readable worst cases |
+| `scripts/run_queue.py` | Runs the GPU-bound experiments one after another, resumably (`--concurrency 2`, D-026) |
+| `scripts/check_llm.py`, `scripts/export_demo_assets.py` | Live model check; demo sample runs mined from logs |
