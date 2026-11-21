@@ -119,8 +119,26 @@ One entry per working session: what was done, how it was tested, where outputs a
 - RQ3 preview from the bots: a single noise-free preview (L1) makes B2 *worse* than geometry alone (over-confident outcomes), while noisy rollouts (L2) help. B0/B1 are identical across levels, as expected (they ignore the extra information).
 - B2's regret is lowest in position situations (0.18 vs B1 0.40), where leave quality matters.
 
+**Open / next** (superseded by the next entry)
+
+## 2026-11-20: Local LLM, dev pilot, prompt iteration, prompts frozen
+
+**Local model (D-025).** Vertex still returns 429 and the team asked to save cloud credits, so the main LLM experiments run on Qwen 2.5 7B Instruct (Q4_K_M) via Ollama 0.40 on the laptop's RTX 4060 (8 GB), `OLLAMA_NUM_PARALLEL=4`. Installed with `winget install Ollama.Ollama`; model `qwen2.5:7b-instruct` (4.7 GB). `scripts/check_llm.py` passes (SA ≈ 3.7 s, MA ≈ 32 s per decision in isolation).
+
+**Dev pilot, round 0** (60 dev positions, L2; `results/dev_pilot/`): mean regret B2 0.359, SA 0.412, MA 0.423; safety rate SA 33 %, MA 32 % (B2 13 %). Trace reading showed (1) the coordinator followed the position specialist in 52 of 60 decisions, choosing better leaves over clearly higher pot probabilities (e.g. a 50 % pot worth 0.11 over a 75 % pot worth 1.11), and (2) specialists sometimes named a top choice that was not their highest score (19 of 180 reports).
+
+**Round 1 changes** (prompt version `070cfbefbf9d`): a shared rule for all LLM systems that pot probability comes first and the leave breaks ties between similar pots, and that a safety is right only when no pot is reasonably likely; specialists' top choice must be their highest score; the coordinator must not default to one specialist.
+
+**Dev pilot, round 1** (`results/dev_pilot_r1/`): SA 0.380, MA 0.351 (B2 0.359); safety rate SA 20 %, MA 12 %; decisions where the coordinator followed only the position specialist fell from 14 to 7; inconsistent specialist tops 14 / 179.
+
+**Frozen.** Prompts tagged `prompts-v1` after two rounds (the plan allows three); with 60 dev positions further tuning would mostly fit noise. All rounds are in `results/prompt_iterations.csv` and in `results/summary.md`.
+
+**Measured cost/latency under load** (4 concurrent decisions): SA ≈ 14 s, MA ≈ 41 s (p95 61 s) per decision; MA uses ~4 calls and ~4× the input tokens of SA.
+
+**Running:** E1 on the 180 test positions (B0, B1, B2, SA, MA, SA-vote; L2).
+
 **Open / next**
-- LLM experiments are blocked on the Vertex AI quota (see the Phase 5 entry). Once it is lifted: `scripts/check_llm.py`, the dev pilot and prompt iteration, freeze prompts (`git tag prompts-v1`), then E1, E4, E6, E10, E2.
+- After E1: `analyze.py`, `failure_cases.py --exp e1`, `export_demo_assets.py --exp e1`; then E4 (L0/L1/L2), E6 (ablations), E10 (variance), E2 (games).
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
 - Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
