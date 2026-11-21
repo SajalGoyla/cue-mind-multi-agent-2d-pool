@@ -26,6 +26,8 @@ QUEUE = [
     ("e5_low", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e5_low.yaml"]),
     ("e5_high", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e5_high.yaml"]),
     ("e6", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e6.yaml"]),
+    ("e3", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/e3.yaml"]),
+    ("e9", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e9.yaml"]),
     ("analyze", [PY, "experiments/analyze.py"]),
 ]
 

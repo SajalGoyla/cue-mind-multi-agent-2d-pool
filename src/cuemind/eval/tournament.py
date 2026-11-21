@@ -32,10 +32,13 @@ class GameJob:
     prep: dict
     max_shots: int = 150
     policy_kwargs: dict = field(default_factory=dict)
+    start_state: dict | None = None   # mid-game start (E3); None = full rack from the break
+    start_id: str | None = None
 
     @property
     def game_id(self) -> str:
-        return f"{self.exp_id}_{self.p1}_vs_{self.p2}_{self.noise}_s{self.seed}"
+        where = f"_{self.start_id}" if self.start_id else f"_s{self.seed}"
+        return f"{self.exp_id}_{self.p1}_vs_{self.p2}_{self.noise}{where}"
 
 
 def build_jobs(exp_id: str, pairings: list[tuple[str, str]], seeds: list[int], noise: str,
@@ -50,10 +53,29 @@ def build_jobs(exp_id: str, pairings: list[tuple[str, str]], seeds: list[int], n
     return jobs
 
 
+def build_midgame_jobs(exp_id: str, pairings: list[tuple[str, str]], positions: list[dict],
+                       noise: str, prep: PrepConfig, max_shots: int = 150,
+                       policy_kwargs: dict | None = None) -> list[GameJob]:
+    """E3: games that start from benchmark positions. For each position and pairing (X, Y),
+    X takes the seat of the player to shoot in one game and Y in the other; both games share
+    the noise streams (seed = position index)."""
+    jobs = []
+    for a, b in pairings:
+        for i, rec in enumerate(positions):
+            shooter = rec["state"]["shooter"]
+            for first, second in ((a, b), (b, a)):
+                p1, p2 = (first, second) if shooter == "P1" else (second, first)
+                jobs.append(GameJob(exp_id, 5000 + i, p1, p2, noise, prep.to_dict(), max_shots,
+                                    policy_kwargs or {}, start_state=rec["state"],
+                                    start_id=f"{rec['position_id']}_{first}first"))
+    return jobs
+
+
 def run_job(job: GameJob, raw_dir: str | None) -> dict[str, Any]:
     """Executed in a worker process."""
     from cuemind.game.runner import play_game
     from cuemind.policies.registry import make_policy
+    from cuemind.sim.state import TableState
 
     kw = job.policy_kwargs
     policies = {"P1": make_policy(job.p1, **kw.get(job.p1, {})),
@@ -62,9 +84,10 @@ def run_job(job: GameJob, raw_dir: str | None) -> dict[str, Any]:
     if raw_dir:
         log_path = Path(raw_dir) / f"{job.game_id}.jsonl"
         log_path.unlink(missing_ok=True)  # restart cleanly if a previous attempt died
+    start = TableState.model_validate(job.start_state) if job.start_state else None
     res = play_game(policies, seed=job.seed, noise=job.noise, prep=PrepConfig(**job.prep),
-                    max_shots=job.max_shots, game_id=job.game_id, log_path=log_path,
-                    exp_id=job.exp_id)
+                    start_state=start, max_shots=job.max_shots, game_id=job.game_id,
+                    log_path=log_path, exp_id=job.exp_id)
     summary = res.summary()
     summary.update(players={"P1": job.p1, "P2": job.p2}, breaker="P1", noise=job.noise,
                    prep=job.prep, seat_metrics=seat_metrics(res.records))

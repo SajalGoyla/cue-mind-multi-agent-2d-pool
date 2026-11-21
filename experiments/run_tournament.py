@@ -19,7 +19,8 @@ import yaml
 
 from cuemind.candidates.pipeline import PrepConfig
 from cuemind.eval.metrics import pairing_summary
-from cuemind.eval.tournament import build_jobs, run_tournament
+from cuemind.eval.positions import load_positions
+from cuemind.eval.tournament import build_jobs, build_midgame_jobs, run_tournament
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,8 +44,10 @@ def main(argv: list[str] | None = None) -> None:
     cfg = yaml.safe_load(Path(a.config).read_text(encoding="utf-8"))
     exp_id = cfg["exp_id"]
     out = Path(a.out) if a.out else ROOT / "results" / exp_id
-    n_seeds = a.seeds or cfg["seeds"]["count"]
-    seeds = list(range(cfg["seeds"]["start"], cfg["seeds"]["start"] + n_seeds))
+    seeds: list[int] = []
+    if "seeds" in cfg:
+        n_seeds = a.seeds or cfg["seeds"]["count"]
+        seeds = list(range(cfg["seeds"]["start"], cfg["seeds"]["start"] + n_seeds))
     prep = PrepConfig(**cfg.get("prep", {}))
     pairings = [tuple(p) for p in cfg["pairings"]]
     workers = a.workers or cfg.get("workers", 8)
@@ -56,8 +59,14 @@ def main(argv: list[str] | None = None) -> None:
 
     rows = []
     for noise in cfg.get("noise_levels", ["medium"]):
-        jobs = build_jobs(exp_id, pairings, seeds, noise, prep, cfg.get("max_shots", 150),
-                          cfg.get("policy_kwargs"))
+        if cfg.get("start_positions"):  # E3: games from benchmark positions
+            sp = cfg["start_positions"]
+            recs = load_positions(ROOT / sp["file"])[: (a.seeds or sp.get("count", 20))]
+            jobs = build_midgame_jobs(exp_id, pairings, recs, noise, prep,
+                                      cfg.get("max_shots", 150), cfg.get("policy_kwargs"))
+        else:
+            jobs = build_jobs(exp_id, pairings, seeds, noise, prep, cfg.get("max_shots", 150),
+                              cfg.get("policy_kwargs"))
         summaries = run_tournament(jobs, out, workers=workers)
         for x, y in pairings:
             for s, o in ((x, y), (y, x)):
