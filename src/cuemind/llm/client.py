@@ -183,6 +183,31 @@ class OllamaClient:
         self.temperature, self.num_ctx, self.timeout_s = temperature, num_ctx, timeout_s
         self.cache, self.offline = cache, offline
 
+    RETRY_DELAYS_S = (5, 10, 20, 30, 30, 30, 30, 30)  # ~3 min: survives a server restart
+
+    def _post_with_retry(self, httpx, body: dict) -> dict:
+        """Infrastructure failures (server down/restarting, 5xx, timeouts) are retried with
+        backoff instead of surfacing as a model failure, which would otherwise be recorded as
+        a fallback decision and bias the results (D-027)."""
+        last: Exception | None = None
+        for delay in (0, *self.RETRY_DELAYS_S):
+            if delay:
+                time.sleep(delay)
+            try:
+                r = httpx.post(f"{self.host}/api/chat", json=body, timeout=self.timeout_s)
+                if r.status_code >= 500:
+                    raise httpx.HTTPStatusError("server error", request=r.request, response=r)
+                r.raise_for_status()
+                return r.json()
+            except (httpx.ConnectError, httpx.ReadTimeout, httpx.RemoteProtocolError) as exc:
+                last = exc
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code < 500:
+                    raise
+                last = exc
+        assert last is not None
+        raise last
+
     def complete(self, *, system: str, user: str, schema: type[BaseModel], agent: str,
                  repeat_idx: int = 0) -> LLMResult:
         import httpx
@@ -206,9 +231,7 @@ class OllamaClient:
         t0 = time.perf_counter()
         parsed, raw, stop, usage, err = None, "", None, {}, None
         try:
-            r = httpx.post(f"{self.host}/api/chat", json=body, timeout=self.timeout_s)
-            r.raise_for_status()
-            data = r.json()
+            data = self._post_with_retry(httpx, body)
             raw = data.get("message", {}).get("content", "")
             stop = data.get("done_reason")
             usage = {"input_tokens": data.get("prompt_eval_count", 0) or 0,
@@ -218,7 +241,7 @@ class OllamaClient:
                 err = "stop_reason=length (output truncated)"
             else:
                 parsed = schema.model_validate_json(raw)
-        except httpx.ConnectError as exc:
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.RemoteProtocolError) as exc:
             err = f"connection: is `ollama serve` running at {self.host}? ({exc})"
         except httpx.HTTPStatusError as exc:
             err = f"http_{exc.response.status_code}: {exc.response.text[:200]}"

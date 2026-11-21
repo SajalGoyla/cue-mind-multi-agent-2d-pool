@@ -150,6 +150,8 @@ def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
     sent = {}
 
     class Resp:
+        status_code = 200
+
         def raise_for_status(self):
             pass
 
@@ -175,8 +177,22 @@ def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
         raise httpx.ConnectError("refused")
 
     monkeypatch.setattr(httpx, "post", refuse)
+    monkeypatch.setattr(OllamaClient, "RETRY_DELAYS_S", (0, 0))
     bad = OllamaClient("qwen-test").complete(system="s", user="x", schema=SingleDecision, agent="a")
     assert bad.parsed is None and "ollama serve" in bad.error
+
+    # a server that fails twice and then answers is retried transparently
+    calls = {"n": 0}
+
+    def flaky(url, json=None, timeout=None):
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise httpx.ConnectError("restarting")
+        return Resp()
+
+    monkeypatch.setattr(httpx, "post", flaky)
+    ok = OllamaClient("qwen-test").complete(system="s", user="y", schema=SingleDecision, agent="a")
+    assert ok.parsed is not None and calls["n"] == 3
 
 
 def test_confidence_percentages_are_normalised():
