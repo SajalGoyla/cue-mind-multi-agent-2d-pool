@@ -137,8 +137,31 @@ One entry per working session: what was done, how it was tested, where outputs a
 
 **Running:** E1 on the 180 test positions (B0, B1, B2, SA, MA, SA-vote; L2).
 
+**Open / next** (superseded by the next entry)
+
+## 2026-11-20: E1 results (main decision-level comparison, local Qwen 2.5 7B)
+
+`results/e1/`, `results/summary.md`, `results/figures/e1_*.png`; 180 test positions, L2, prompts-v1.
+
+| System | Mean regret [95% CI] | Top-1 | Calls | Latency (s, under 4-way load) |
+|---|---|---|---|---|
+| B0 random | 0.706 [0.597, 0.827] | 0.33 | 0 | — |
+| B1 geometric | 0.343 [0.282, 0.406] | 0.50 | 0 | — |
+| B2 search | 0.241 [0.196, 0.288] | 0.62 | 0 | — |
+| SA | 0.294 [0.242, 0.349] | 0.56 | 1.0 | 8.5 |
+| SA-vote (4) | 0.296 [0.243, 0.352] | 0.55 | 4.0 | 27.0 |
+| MA | 0.307 [0.254, 0.363] | 0.53 | 4.1 | 30.1 |
+
+- **RQ1:** MA vs SA: +0.013 regret (MA slightly worse), Wilcoxon p = 0.80, rank-biserial +0.04; MA vs SA-vote p = 0.86; MA vs B2 +0.066, p = 0.017 (Holm 0.051). No evidence that specialization helps this model; MA costs ~4× the calls and ~3.5× the latency of SA. No fallbacks in any LLM decision.
+- Both LLM systems beat B1 and trail B2 (which uses the same statistics with a hand-written objective).
+- **RQ2 (situations):** MA vs SA regret: offense 0.341 vs 0.345, position 0.246 vs 0.223, defense 0.304 vs 0.253; by difficulty medium 0.349 vs 0.377 (MA's only advantage), hard 0.285 vs 0.250. MA is worst relative to SA in defense, where the safety specialist should help.
+- **Why (failure analysis, `docs/failure_analysis_e1.md`):** the safety specialist recommends a safety in 96 % of positions, so it is a constant rather than selective voice; the coordinator sometimes follows it over a 100 % pot (pos_0113). The largest regrets come from choosing between variants of the same pot (spin/speed) where the oracle values the leave or scratch risk much more than the model does; S01 (the highest pot probability by menu order) is the oracle's best shot in only 38 % of positions, yet B2 picks it 72 %, SA 62 %, MA 56 %.
+- Demo sample runs S1–S4 exported from these logs (`results/demo_assets/`).
+
+**Running (queue, `results/queue.log`):** E4 → E10 → E2 (15 paired seeds) → E5 (low/high) → E6 → analyze.
+
 **Open / next**
-- After E1: `analyze.py`, `failure_cases.py --exp e1`, `export_demo_assets.py --exp e1`; then E4 (L0/L1/L2), E6 (ablations), E10 (variance), E2 (games).
+- Categorise the failure cases (fill in `docs/failure_analysis_e1.md`).
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
 - Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.

@@ -1,0 +1,262 @@
+{
+  "exp": "e1",
+  "runs": [
+    {
+      "slot": "S1_agreement",
+      "position_id": "pos_0071",
+      "png": "results\\demo_assets\\S1_agreement_pos_0071.png",
+      "sa": {
+        "shot_id": "S01",
+        "intent": "offense",
+        "regret": 0.0,
+        "rationale": "High pot probability (100%) and low risk (0% scratch, 0% foul) make this the best offensive shot. Leaving the cue ball in the middle of the table (1.9, 5.5) provides a good next shot opportunity."
+      },
+      "ma": {
+        "shot_id": "S01",
+        "intent": "offense",
+        "regret": 0.0,
+        "rationale": "S01 offers the highest pot probability with minimal risk and a good next shot, aligning well with offensive strategy. While the position specialist notes an excellent next shot, the offensive specialist's high pot probability and low risk make S01 the best choice."
+      },
+      "state": {
+        "schema_version": 1,
+        "cue": [
+          0.2808634534512442,
+          1.046858938389377
+        ],
+        "balls": {
+          "2": [
+            0.7399510826601058,
+            0.445036612650396
+          ],
+          "10": [
+            0.14871176842724818,
+            1.1933759279480838
+          ],
+          "13": [
+            0.32197155155806606,
+            1.6354062184715565
+          ],
+          "8": [
+            0.30607686831434494,
+            1.7507105540375016
+          ],
+          "1": [
+            0.5790357304821216,
+            0.41588280611203315
+          ],
+          "7": [
+            0.5359398084577401,
+            0.15353294647287774
+          ],
+          "15": [
+            0.7613806316520534,
+            1.885340632563249
+          ],
+          "6": [
+            0.37817939634755005,
+            1.667732881710472
+          ],
+          "4": [
+            0.27360532148702793,
+            1.8343364220810752
+          ],
+          "3": [
+            0.3677063769651527,
+            1.9426294392892476
+          ],
+          "11": [
+            0.6343429893678848,
+            1.947950405204407
+          ],
+          "14": [
+            0.23080652637001214,
+            1.7626639334735243
+          ]
+        },
+        "shooter": "P1",
+        "groups": {
+          "P1": "stripes",
+          "P2": "solids"
+        },
+        "ball_in_hand": false,
+        "shot_number": 5,
+        "break_shot": false
+      }
+    },
+    {
+      "slot": "S2_position",
+      "position_id": "pos_0164",
+      "png": "results\\demo_assets\\S2_position_pos_0164.png",
+      "sa": {
+        "shot_id": "S02",
+        "intent": "position",
+        "regret": 0.5919,
+        "rationale": "Pots 7 with high certainty (88%), leaving a good next shot (0.80) and limiting opponent's chances (0.57)."
+      },
+      "ma": {
+        "shot_id": "S01",
+        "intent": "offense",
+        "regret": 0.0,
+        "rationale": "S01 has the highest pot probability and leaves an easy next shot. While the opponent's chance is moderate, the high pot probability makes it the best offensive choice."
+      },
+      "state": {
+        "schema_version": 1,
+        "cue": [
+          0.7940659863829621,
+          0.8940982912046662
+        ],
+        "balls": {
+          "3": [
+            0.14435214188031525,
+            1.1906595412317027
+          ],
+          "7": [
+            0.18210361199822467,
+            1.374619616185266
+          ],
+          "4": [
+            0.8828291983976457,
+            0.3942469597167807
+          ],
+          "9": [
+            0.42445218788683003,
+            0.3740724979389276
+          ],
+          "10": [
+            0.9111192846016055,
+            0.6880592598423989
+          ],
+          "15": [
+            0.5164276055407208,
+            0.7164526133102153
+          ],
+          "11": [
+            0.6143063759604843,
+            0.20681994374588336
+          ],
+          "8": [
+            0.726074862660234,
+            0.6015126696135377
+          ]
+        },
+        "shooter": "P1",
+        "groups": {
+          "P1": "solids",
+          "P2": "stripes"
+        },
+        "ball_in_hand": false,
+        "shot_number": 0,
+        "break_shot": false
+      }
+    },
+    {
+      "slot": "S3_safety",
+      "position_id": "pos_0061",
+      "png": "results\\demo_assets\\S3_safety_pos_0061.png",
+      "sa": {
+        "shot_id": "S02",
+        "intent": "offense",
+        "regret": 0.1286,
+        "rationale": "S02 has the highest pot probability (12%) while avoiding both scratches and fouls. It also leaves a relatively easy next shot (0.46) compared to other potting options."
+      },
+      "ma": {
+        "shot_id": "S06",
+        "intent": "safety",
+        "regret": 0.44870000000000004,
+        "rationale": "The safety specialist's choice of S06 is followed due to its minimal risk of foul and leaving the opponent an easier shot, which is better than the moderate risks in the other safeties. While it doesn't pot the ball, it maintains a good defensive position."
+      },
+      "state": {
+        "schema_version": 1,
+        "cue": [
+          0.8252760990608872,
+          0.2393445283844061
+        ],
+        "balls": {
+          "10": [
+            0.8988363563458242,
+            1.8560064675617067
+          ],
+          "15": [
+            0.8539263313165509,
+            1.4508435647031692
+          ],
+          "2": [
+            0.8014587487049486,
+            1.1069988106240438
+          ],
+          "8": [
+            0.6923752618398324,
+            0.8525663400194518
+          ]
+        },
+        "shooter": "P1",
+        "groups": {
+          "P1": "stripes",
+          "P2": "solids"
+        },
+        "ball_in_hand": false,
+        "shot_number": 0,
+        "break_shot": false
+      }
+    },
+    {
+      "slot": "S4_failure",
+      "position_id": "pos_0105",
+      "png": "results\\demo_assets\\S4_failure_pos_0105.png",
+      "sa": {
+        "shot_id": "S02",
+        "intent": "offense",
+        "regret": 0.0,
+        "rationale": "High pot probability (88%) with no risk of scratch or foul. The cue ball ends near the bottom rail, setting up an easy next shot. The opponent's chance after a safety is moderate (0.61), making this the better potting option."
+      },
+      "ma": {
+        "shot_id": "S01",
+        "intent": "offense",
+        "regret": 1.2996999999999996,
+        "rationale": "The offense specialist and position specialist both favor S01 due to its high pot probability and easy next shot, even though the safety specialist prefers a safety. Given you are ON THE 8, the risk of a scratch is extremely costly, and S01 provides the highest chance of winning with a realistic stroke."
+      },
+      "state": {
+        "schema_version": 1,
+        "cue": [
+          0.48899554780628973,
+          0.8311983229931821
+        ],
+        "balls": {
+          "15": [
+            0.6310703572838179,
+            1.6375854692485396
+          ],
+          "8": [
+            0.9592288064747642,
+            0.33055647039255626
+          ],
+          "14": [
+            0.6875930671102048,
+            1.595020531338451
+          ],
+          "12": [
+            0.5465019401433724,
+            1.4607683163059413
+          ],
+          "10": [
+            0.7136805675434165,
+            1.8383977068899968
+          ],
+          "9": [
+            0.7815588014919573,
+            1.8614942300844322
+          ]
+        },
+        "shooter": "P2",
+        "groups": {
+          "P1": "stripes",
+          "P2": "solids"
+        },
+        "ball_in_hand": false,
+        "shot_number": 12,
+        "break_shot": false
+      }
+    }
+  ],
+  "missing": []
+}

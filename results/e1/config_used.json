@@ -1,0 +1,31 @@
+{
+  "exp_id": "e1",
+  "positions": [
+    "data/positions/test.jsonl"
+  ],
+  "systems": [
+    "b0",
+    "b1",
+    "b2",
+    "sa",
+    "ma",
+    "sa-vote"
+  ],
+  "access_levels": [
+    "L2"
+  ],
+  "repeats": 1,
+  "threads": 4,
+  "llm": {
+    "llm": "ollama"
+  },
+  "git_commit": "5107497",
+  "cli": {
+    "config": "experiments/configs/e1.yaml",
+    "limit": null,
+    "llm": null,
+    "max_usd": null,
+    "threads": 4,
+    "out": null
+  }
+}

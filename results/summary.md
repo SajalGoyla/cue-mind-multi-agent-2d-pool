@@ -70,6 +70,31 @@ Figure: `results/figures/dev_pilot_r1_regret_by_situation.png`
 
 Figure: `results/figures/dev_pilot_r1_cost_quality.png`
 
+## e1: decision-level results (`results/e1/decisions.jsonl`)
+
+| system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
+|---|---|---|---|---|---|---|---|---|---|
+| b0 | L2 | 180 | 0.706 [0.597, 0.827] | 0.33 | 0.01 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b1 | L2 | 180 | 0.343 [0.282, 0.406] | 0.50 | 0.44 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L2 | 180 | 0.241 [0.196, 0.288] | 0.62 | 0.53 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| ma | L2 | 180 | 0.307 [0.254, 0.363] | 0.53 | 0.42 | 0.00 | 4.1 | 0.0000 | 30.1 |
+| sa | L2 | 180 | 0.294 [0.242, 0.349] | 0.56 | 0.47 | 0.00 | 1.0 | 0.0000 | 8.5 |
+| sa-vote | L2 | 180 | 0.296 [0.243, 0.352] | 0.55 | 0.45 | 0.00 | 4.0 | 0.0000 | 27.0 |
+
+Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
+
+| info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
+|---|---|---|---|---|---|---|
+| L2 | sa | 180 | +0.013 | 0.797 | 1 | +0.04 |
+| L2 | sa-vote | 180 | +0.011 | 0.862 | 1 | +0.02 |
+| L2 | b2 | 180 | +0.066 | 0.0169 | 0.0508 | +0.31 |
+
+Figure: `results/figures/e1_regret.png`
+
+Figure: `results/figures/e1_regret_by_situation.png`
+
+Figure: `results/figures/e1_cost_quality.png`
+
 ## e1_bots: decision-level results (`results/e1_bots/decisions.jsonl`)
 
 | system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
