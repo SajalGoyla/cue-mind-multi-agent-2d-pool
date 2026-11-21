@@ -35,7 +35,7 @@ Broken down by situation, MA's regret relative to SA is similar in offense posit
 
 ### 6.5 RQ3: simulation access and execution noise
 
-The bots already show that *how* simulation is summarised matters. Given one noise-free preview (L1), B2 is worse than with geometry alone (0.387 vs 0.318), because a perfect-stroke preview is over-confident about pots that often miss with realistic strokes; with eight noisy rollouts (L2) it reaches 0.246 (189 positions including hard cases). LLM systems at L0/L1/L2 (E4): [Q]. Effect of execution noise on regret (E5, low/high vs E1 medium): [Q].
+The bots already show that *how* simulation is summarised matters. Given one noise-free preview (L1), B2 is worse than with geometry alone (0.387 vs 0.318), because a perfect-stroke preview is over-confident about pots that often miss with realistic strokes; with eight noisy rollouts (L2) it reaches 0.246 (189 positions including hard cases). The LLM systems follow the same pattern and depend on simulation even more (E4, same 180 positions and frozen menus): SA's regret is 0.435 with geometry only, 0.441 with one preview and 0.290 with noisy rollouts; MA's is 0.546, 0.496 and 0.307. Contrary to our hypothesis H4, the multi-agent disadvantage is *largest* with the least information (MA − SA: +0.112 at L0, p = 0.046 unadjusted, Holm 0.14; +0.055 at L1; +0.017 at L2, p = 0.67): with only geometry the specialists have little to anchor their judgements on, and the coordinator compounds their errors rather than averaging them out. A single noise-free preview gives the single agent nothing, mirroring its harmful effect on B2. No LLM decision needed the fallback rule (0 of 1,080). Effect of execution noise on regret (E5, low/high vs E1 medium): [Q].
 
 ## 7. Analysis
 

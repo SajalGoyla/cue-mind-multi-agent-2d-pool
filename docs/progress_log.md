@@ -166,6 +166,21 @@ One entry per working session: what was done, how it was tested, where outputs a
 
 **Memory management (D-026–D-028):** the Ollama runner leaks RAM during long runs; the queue now runs at concurrency 2 with a watchdog that restarts Ollama above 3.5 GB runner RSS, and the client retries infrastructure failures so restarts never turn into fallback decisions. E4 was stopped cleanly at 678 / 1,620 decisions and resumed under the new setup.
 
+## 2026-11-20: E4 results (simulation access, RQ3)
+
+`results/e4/`, `results/summary.md`; 180 test positions, frozen menus described at L0/L1/L2; 0 fallbacks in 1,080 LLM decisions; two watchdog restarts during the run.
+
+| Info | SA | MA | B2 | MA − SA (p / Holm) |
+|---|---|---|---|---|
+| L0 geometry | 0.435 | 0.546 | 0.321 | +0.112 (0.046 / 0.14) |
+| L1 preview | 0.441 | 0.496 | 0.390 | +0.055 (0.090 / 0.18) |
+| L2 rollouts | 0.290 | 0.307 | 0.241 | +0.017 (0.67 / 0.67) |
+
+- Noisy-rollout statistics are what make the LLMs competitive; a single perfect-stroke preview does not help SA and hurts B2.
+- H4 predicted the MA–SA gap would shrink without simulation; instead it is largest at L0. Interpretation: specialists with little information produce weaker reports, and the coordinator compounds errors.
+
+**Queue:** E10 running, then E2, E5, E6, E3, E9.
+
 **Open / next**
 - Categorise the hand-read failure cases (fill in `docs/failure_analysis_e1.md`).
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.

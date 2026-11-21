@@ -70,6 +70,25 @@ Figure: `results/figures/dev_pilot_r1_regret_by_situation.png`
 
 Figure: `results/figures/dev_pilot_r1_cost_quality.png`
 
+## e10: decision-level results (`results/e10/decisions.jsonl`)
+
+| system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
+|---|---|---|---|---|---|---|---|---|---|
+| ma | L2 | 1 | 0.621 [0.621, 0.621] | 0.00 | 0.15 | 0.00 | 4.0 | 0.0000 | 0.0 |
+| sa | L2 | 3 | 0.346 [0.076, 0.887] | 0.67 | 0.53 | 0.00 | 1.0 | 0.0000 | 2.9 |
+
+Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
+
+| info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
+|---|---|---|---|---|---|---|
+| L2 | sa | 1 | +0.546 | 1 | 1 | +1.00 |
+
+Figure: `results/figures/e10_regret.png`
+
+Figure: `results/figures/e10_regret_by_situation.png`
+
+Figure: `results/figures/e10_cost_quality.png`
+
 ## e1: decision-level results (`results/e1/decisions.jsonl`)
 
 | system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
@@ -130,26 +149,36 @@ Figure: `results/figures/e1_bots_regret_by_situation.png`
 
 | system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
 |---|---|---|---|---|---|---|---|---|---|
-| b2 | L0 | 14 | 0.417 [0.169, 0.699] | 0.50 | 0.62 | 0.00 | 0.0 | 0.0000 | 0.0 |
-| b2 | L1 | 14 | 0.609 [0.333, 0.890] | 0.36 | 0.28 | 0.00 | 0.0 | 0.0000 | 0.0 |
-| b2 | L2 | 14 | 0.210 [0.078, 0.368] | 0.64 | 0.76 | 0.00 | 0.0 | 0.0000 | 0.0 |
-| ma | L0 | 14 | 0.594 [0.336, 0.863] | 0.43 | 0.44 | 0.00 | 4.0 | 0.0000 | 31.7 |
-| ma | L1 | 14 | 0.616 [0.309, 0.952] | 0.36 | 0.36 | 0.00 | 4.0 | 0.0000 | 32.6 |
-| ma | L2 | 14 | 0.298 [0.143, 0.469] | 0.50 | 0.67 | 0.00 | 4.0 | 0.0000 | 0.0 |
-| sa | L0 | 15 | 0.468 [0.241, 0.717] | 0.40 | 0.52 | 0.00 | 1.0 | 0.0000 | 5.2 |
-| sa | L1 | 15 | 0.767 [0.405, 1.258] | 0.33 | 0.36 | 0.00 | 1.0 | 0.0000 | 4.2 |
-| sa | L2 | 15 | 0.370 [0.169, 0.606] | 0.53 | 0.58 | 0.00 | 1.0 | 0.0000 | 0.0 |
+| b2 | L0 | 180 | 0.321 [0.264, 0.382] | 0.53 | 0.46 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L1 | 180 | 0.390 [0.327, 0.457] | 0.47 | 0.36 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| b2 | L2 | 180 | 0.241 [0.196, 0.288] | 0.62 | 0.53 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| ma | L0 | 180 | 0.546 [0.451, 0.653] | 0.35 | 0.18 | 0.00 | 4.1 | 0.0000 | 25.7 |
+| ma | L1 | 180 | 0.496 [0.423, 0.572] | 0.39 | 0.21 | 0.00 | 4.2 | 0.0000 | 26.5 |
+| ma | L2 | 180 | 0.307 [0.255, 0.362] | 0.53 | 0.42 | 0.00 | 4.1 | 0.0000 | 0.0 |
+| sa | L0 | 180 | 0.435 [0.361, 0.508] | 0.47 | 0.29 | 0.00 | 1.0 | 0.0000 | 2.6 |
+| sa | L1 | 180 | 0.441 [0.372, 0.516] | 0.44 | 0.33 | 0.00 | 1.0 | 0.0000 | 2.5 |
+| sa | L2 | 180 | 0.290 [0.238, 0.345] | 0.56 | 0.48 | 0.00 | 1.0 | 0.0000 | 0.0 |
 
 Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
 
 | info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
 |---|---|---|---|---|---|---|
-| L0 | sa | 14 | +0.131 | 0.625 | 1 | +0.20 |
-| L0 | b2 | 14 | +0.177 | 0.413 | 1 | +0.30 |
-| L1 | sa | 14 | -0.167 | 0.734 | 1 | -0.16 |
-| L1 | b2 | 14 | +0.007 | 0.638 | 1 | -0.18 |
-| L2 | sa | 14 | -0.060 | 1 | 1 | -0.33 |
-| L2 | b2 | 14 | +0.087 | 0.5 | 1 | +0.67 |
+| L0 | sa | 180 | +0.112 | 0.0456 | 0.137 | +0.22 |
+| L0 | b2 | 180 | +0.225 | 1.2e-05 | 7.19e-05 | +0.43 |
+| L1 | sa | 180 | +0.055 | 0.0895 | 0.179 | +0.21 |
+| L1 | b2 | 180 | +0.106 | 0.00942 | 0.0471 | +0.31 |
+| L2 | sa | 180 | +0.017 | 0.674 | 0.674 | +0.06 |
+| L2 | b2 | 180 | +0.066 | 0.0169 | 0.0677 | +0.31 |
+
+Error categories (regret > 0.3; `results/e4/error_categories.csv`):
+
+| system | errors | needless_safety | other_target | pot_over_safety | scratch_risk | variant |
+|---|---|---|---|---|---|---|
+| b2 | 54 | 0 | 20 | 4 | 6 | 24 |
+| ma | 69 | 1 | 35 | 3 | 4 | 26 |
+| sa | 64 | 1 | 27 | 5 | 5 | 26 |
+
+MA errors where a specialist named the best shot but the coordinator followed another: 21 of 69.
 
 Figure: `results/figures/e4_regret.png`
 

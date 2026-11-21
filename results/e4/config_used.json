@@ -1,0 +1,30 @@
+{
+  "exp_id": "e4",
+  "positions": [
+    "data/positions/test.jsonl"
+  ],
+  "systems": [
+    "sa",
+    "ma",
+    "b2"
+  ],
+  "access_levels": [
+    "L0",
+    "L1",
+    "L2"
+  ],
+  "repeats": 1,
+  "threads": 4,
+  "llm": {
+    "llm": "ollama"
+  },
+  "git_commit": "3f4bd0b",
+  "cli": {
+    "config": "experiments/configs/e4.yaml",
+    "limit": null,
+    "llm": null,
+    "max_usd": null,
+    "threads": 2,
+    "out": null
+  }
+}
