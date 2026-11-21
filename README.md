@@ -72,10 +72,22 @@ python -m cuemind.game.runner --p1 b2 --p2 b1 --games 1 # one full game between 
 streamlit run demo/app.py                              # demo; choose "Offline (fake LLM)" in the sidebar
 ```
 
+## Local LLM (default backend)
+
+The main experiments run on a local open-weight model, so they cost nothing and need no cloud quota:
+
+```bash
+winget install Ollama.Ollama            # or https://ollama.com/download (macOS/Linux)
+ollama pull qwen2.5:7b-instruct         # ~4.7 GB; runs on an 8 GB GPU
+OLLAMA_NUM_PARALLEL=4 ollama serve      # PowerShell: $env:OLLAMA_NUM_PARALLEL="4"; ollama serve
+```
+
+`CUEMIND_LLM=ollama` (default) selects it; `CUEMIND_LLM=claude` switches to Claude on Vertex AI (needs the credentials below). Measured on an RTX 4060 laptop GPU: single agent ≈ 4 s per decision, multi-agent ≈ 30 s.
+
 ## Live LLM check
 
 ```bash
-python scripts/check_llm.py --quick   # one structured call (fractions of a cent)
+python scripts/check_llm.py --quick   # one structured call (free locally; fractions of a cent on Claude)
 python scripts/check_llm.py           # plus one single-agent and one multi-agent decision
 ```
 

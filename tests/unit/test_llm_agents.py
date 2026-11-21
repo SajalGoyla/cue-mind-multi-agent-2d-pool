@@ -137,3 +137,50 @@ def test_cost_formula():
     u = {"input_tokens": 1_000_000, "output_tokens": 1_000_000, "cache_read_tokens": 0}
     assert cost_usd("claude-haiku-5-5", u) == pytest.approx(0.60)
     assert cost_usd("unknown-model", u) == 0.0
+
+
+# ------------------------------------------------------------------ ollama (mocked HTTP)
+def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
+    import json as _json
+
+    import httpx
+
+    from cuemind.llm.client import OllamaClient
+
+    sent = {}
+
+    class Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"message": {"content": _json.dumps({"shot_id": "S02", "intent": "position",
+                                                         "rationale": "leave", "confidence": 0.8})},
+                    "done_reason": "stop", "prompt_eval_count": 900, "eval_count": 60}
+
+    def fake_post(url, json=None, timeout=None):
+        sent.update(url=url, body=json)
+        return Resp()
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    client = OllamaClient("qwen-test", cache=ResponseCache(tmp_path / "c.sqlite"))
+    r = client.complete(system="s", user="u", schema=SingleDecision, agent="single", repeat_idx=2)
+    assert r.parsed.shot_id == "S02" and r.usage["input_tokens"] == 900 and r.usage["cost_usd"] == 0
+    assert sent["url"].endswith("/api/chat") and sent["body"]["options"]["seed"] == 1002
+    assert sent["body"]["format"]["properties"]["shot_id"]
+    again = client.complete(system="s", user="u", schema=SingleDecision, agent="single", repeat_idx=2)
+    assert again.cached and again.parsed.shot_id == "S02"
+
+    def refuse(url, json=None, timeout=None):
+        raise httpx.ConnectError("refused")
+
+    monkeypatch.setattr(httpx, "post", refuse)
+    bad = OllamaClient("qwen-test").complete(system="s", user="x", schema=SingleDecision, agent="a")
+    assert bad.parsed is None and "ollama serve" in bad.error
+
+
+def test_confidence_percentages_are_normalised():
+    from cuemind.llm.schemas import clamp01
+
+    assert clamp01(0.4) == 0.4 and clamp01(95) == 0.95 and clamp01(-3) == 0.0
+    assert clamp01(500) == 1.0 and clamp01("x") == 0.5

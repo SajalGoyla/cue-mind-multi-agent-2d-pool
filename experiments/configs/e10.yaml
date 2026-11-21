@@ -6,4 +6,4 @@ systems: [sa, ma]
 access_levels: [L2]
 repeats: 3
 threads: 4
-llm: {max_usd: 3}
+llm: {llm: ollama}   # local model; use {llm: claude, max_usd: N} for Vertex

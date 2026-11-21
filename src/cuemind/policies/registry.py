@@ -4,8 +4,9 @@ Names: b0, b1, b2 (bots); sa, sa-vote (4 votes); ma, ma+critic, ma-no-offense,
 ma-no-position, ma-no-safety (LLM systems).
 
 LLM policies accept keyword arguments (from experiment configs):
-    llm: "claude" (default) or "fake"
-    model, effort: override CUEMIND_MODEL / CUEMIND_EFFORT
+    llm: "ollama" (local open-weight model; default, or CUEMIND_LLM), "claude" (Vertex AI)
+         or "fake" (offline tests)
+    model: override CUEMIND_OLLAMA_MODEL / CUEMIND_MODEL; effort (Claude) / temperature (Ollama)
     run_id, max_usd: budget guard shared by all worker processes
     offline: true -> cache-only (no API calls)
 """
@@ -21,13 +22,19 @@ from cuemind.policies.simple_bots import GeometricBot, RandomBot
 
 def make_llm_client(**kw: Any):
     from cuemind.llm.cache import Budget, ResponseCache
-    from cuemind.llm.client import ClaudeVertexClient, FakeLLM
+    from cuemind.llm.client import ClaudeVertexClient, FakeLLM, OllamaClient
 
-    if kw.get("llm", "claude") == "fake":
+    kind = kw.get("llm") or os.environ.get("CUEMIND_LLM", "ollama")
+    if kind == "fake":
         return FakeLLM(kw.get("fake_mode", "best"))
     cache_path = kw.get("cache_path") or os.environ.get("CUEMIND_LLM_CACHE",
                                                         "results/cache/llm_cache.sqlite")
     cache = ResponseCache(cache_path)
+    if kind == "ollama":
+        return OllamaClient(kw.get("model"), temperature=float(kw.get("temperature", 0.7)),
+                            cache=cache, offline=bool(kw.get("offline", False)))
+    if kind != "claude":
+        raise ValueError(f"unknown llm kind {kind!r}; use ollama, claude or fake")
     budget = None
     if kw.get("max_usd") is not None:
         budget = Budget(cache_path, kw.get("run_id", "default"), float(kw["max_usd"]))

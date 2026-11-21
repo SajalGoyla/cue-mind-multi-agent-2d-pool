@@ -3,10 +3,10 @@
 Launch:  streamlit run demo/app.py
 
 Modes (sidebar):
-* Offline (fake LLM)  - no network or credentials; deterministic stand-in for the LLM.
-* Claude (live)       - real calls through Vertex AI (.env), with the response cache:
-                        a decision already made before returns instantly and is labelled "cached".
-* Claude (cache only) - never calls the API; only replays cached responses.
+* Local model (Ollama) - open-weight model on this machine (default qwen2.5:7b-instruct);
+                         decisions made before return instantly and are labelled "cached".
+* Claude (Vertex)      - real calls through Vertex AI (.env), with the same response cache.
+* Offline (fake LLM)   - no model at all; deterministic stand-in (always works).
 """
 
 from __future__ import annotations
@@ -67,8 +67,10 @@ def get_policies(mode: str):
 
     if mode == "Offline (fake LLM)":
         client = make_llm_client(llm="fake")
+    elif mode == "Local model (Ollama)":
+        client = make_llm_client(llm="ollama")
     else:
-        client = make_llm_client(run_id="demo", max_usd=2.0, offline=(mode == "Claude (cache only)"))
+        client = make_llm_client(llm="claude", run_id="demo", max_usd=2.0)
     return SingleAgent(client), MultiAgent(client)
 
 
@@ -298,12 +300,14 @@ def main() -> None:
     st.title("CueMind: do specialised LLM agents choose better pool shots than one LLM?")
     st.caption("Code generates and simulates candidate shots; the LLM systems only choose among them.")
     with st.sidebar:
-        mode = st.radio("LLM mode", ["Offline (fake LLM)", "Claude (live)", "Claude (cache only)"])
+        mode = st.radio("LLM mode", ["Offline (fake LLM)", "Local model (Ollama)", "Claude (Vertex)"])
         access = st.selectbox("Information given to the agents", ["L2", "L1", "L0"],
                               help="L0 geometry only · L1 one perfect-stroke preview · L2 statistics over realistic strokes")
         noise = st.selectbox("Execution noise", ["medium", "low", "high", "none"])
-        if mode != "Offline (fake LLM)":
-            st.caption("Live calls use Vertex AI credentials from .env; responses are cached.")
+        if mode == "Local model (Ollama)":
+            st.caption("Requires `ollama serve` and the model pulled; responses are cached.")
+        elif mode == "Claude (Vertex)":
+            st.caption("Uses Vertex AI credentials from .env; responses are cached.")
     t1, t2, t3 = st.tabs(["Decide a shot", "Replay a game", "Results"])
     with t1:
         tab_decide(mode, access, noise)

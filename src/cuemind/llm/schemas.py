@@ -48,7 +48,12 @@ class CriticVerdict(BaseModel):
 
 
 def clamp01(x: float) -> float:
+    """Confidence in [0, 1]. Models sometimes answer on a 0-100 scale (seen with Qwen 2.5);
+    values in (1, 100] are read as percentages."""
     try:
-        return max(0.0, min(1.0, float(x)))
+        v = float(x)
     except (TypeError, ValueError):
         return 0.5
+    if 1.0 < v <= 100.0:
+        v /= 100.0
+    return max(0.0, min(1.0, v))

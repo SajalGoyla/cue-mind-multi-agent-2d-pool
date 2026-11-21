@@ -28,6 +28,7 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-022 | 2026-11-20 | Hand-made hard cases with oracle-drafted, human-reviewed labels | Accepted |
 | D-023 | 2026-11-20 | Budget exhaustion stops a game instead of falling back | Accepted |
 | D-024 | 2026-11-20 | Keep medium noise as the main setting; decision-level benchmark carries the main comparison | Accepted |
+| D-025 | 2026-11-20 | Local open-weight model (Qwen 2.5 7B via Ollama) for the main LLM experiments | Accepted |
 
 ---
 
@@ -186,3 +187,11 @@ Each entry records one design decision: the context, what we chose, the alternat
 - **Interpretation.** Under these rules and this menu, better shot selection changes game outcomes only slightly; outcomes are dominated by execution luck and by who gets the table in a good layout. Lowering the noise does not make skill differences show up in win rates, so there is no reason to move away from the planned medium setting (a plausible amateur).
 - **Decision.** Keep medium noise for the dataset, the oracle and all main experiments. Treat the positions benchmark (regret against the oracle) as the primary evidence for RQ1/RQ2; report game win rates (E2) as secondary evidence with honest power statements (with ~50 games per pairing only very large gaps are detectable).
 - **Also measured.** Profiling one L2 decision (8 balls): 222 pooltool simulations account for ~85 % of the time (~34 ms each); our code's overhead is small. Speed-ups would require fewer rollouts or more processes, and process count is limited by RAM (D-021), so settings stay as planned.
+
+## D-025: Local open-weight model for the main LLM experiments
+
+- **Context.** Claude on Vertex AI returns HTTP 429 (quota) for every call on the course project, and the team asked to save Google Cloud credits for later. The original proposal planned to run most experiments on an open-weight model and confirm key results on an API model.
+- **Decision.** Main LLM experiments use **Qwen 2.5 7B Instruct (Q4_K_M, 7.6 B parameters) served locally by Ollama 0.40** on the laptop's RTX 4060 (8 GB). `llm/client.py: OllamaClient` uses `/api/chat` with the pydantic JSON schema as `format` (constrained decoding), temperature 0.7 for every system, `seed = 1000 + repeat_idx` (independent but reproducible samples for SA-vote and E10), context 8192 tokens, and the same response cache. The server runs with `OLLAMA_NUM_PARALLEL=4` so MA's three specialists are decoded concurrently. `CUEMIND_LLM=ollama` is now the default backend; Claude remains available (`llm: claude`) for the confirmation experiment (E8) once quota exists.
+- **Measured (first live check).** SA ≈ 3.7 s and ~2.3 k input tokens per decision; MA ≈ 32 s, 4 calls, ~9.4 k input and ~1.4 k output tokens per decision; the first call of a session pays ~70 s to load the model. Cost is zero; tokens and latency are still reported, and the cost analysis for RQ2 uses tokens and latency (API prices can be applied to the token counts afterwards).
+- **Observed quirk.** The model sometimes gives confidence on a 0–100 scale; `clamp01` reads values in (1, 100] as percentages.
+- **Consequences.** Results describe a small open model; whether they transfer to a frontier model is tested later with Claude (E8) and stated as a limitation until then.
