@@ -1,0 +1,8 @@
+# E9 (extension): does a critic that may veto the coordinator once help MA?
+exp_id: e9
+positions: [data/positions/test.jsonl, data/positions/hard_cases.jsonl]
+systems: [ma+critic]
+access_levels: [L2]
+repeats: 1
+threads: 2
+llm: {llm: ollama}

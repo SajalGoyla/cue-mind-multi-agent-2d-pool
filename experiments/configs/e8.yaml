@@ -1,0 +1,9 @@
+# E8: confirm the main comparison on Claude (Vertex AI). USES GOOGLE CLOUD CREDITS:
+# run only when the team decides to (and the Vertex quota allows), e.g. with --limit 90.
+exp_id: e8
+positions: [data/positions/test.jsonl]
+systems: [sa, ma, sa-vote]
+access_levels: [L2]
+repeats: 1
+threads: 2
+llm: {llm: claude, model: claude-haiku-5-5, run_id: e8, max_usd: 5}
