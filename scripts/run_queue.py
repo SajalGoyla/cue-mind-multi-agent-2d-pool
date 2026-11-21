@@ -22,7 +22,7 @@ PY = sys.executable
 QUEUE = [
     ("e4", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e4.yaml"]),
     ("e10", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e10.yaml", "--limit", "30"]),
-    ("e2", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/e2.yaml", "--workers", "4"]),
+    ("e2", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/e2.yaml"]),
     ("e5_low", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e5_low.yaml"]),
     ("e5_high", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e5_high.yaml"]),
     ("e6", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e6.yaml"]),
@@ -41,6 +41,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--wait-for", default=None, help="experiment whose run log must finish first")
     ap.add_argument("--only", default=None, help="comma-separated subset of step names")
+    ap.add_argument("--concurrency", type=int, default=2,
+                    help="threads per positions run / workers per tournament (memory-bound; D-026)")
     a = ap.parse_args()
     if a.wait_for:
         run_log = ROOT / "results" / f"{a.wait_for}_run.log"
@@ -49,6 +51,10 @@ def main() -> int:
             time.sleep(30)
     steps = [s for s in QUEUE if not a.only or s[0] in a.only.split(",")]
     for name, cmd in steps:
+        if "run_positions.py" in cmd[1]:
+            cmd = cmd + ["--threads", str(a.concurrency)]
+        elif "run_tournament.py" in cmd[1]:
+            cmd = cmd + ["--workers", str(a.concurrency)]
         log(f"start {name}: {' '.join(cmd[1:])}")
         t0 = time.time()
         with open(ROOT / "results" / f"{name}_run.log", "a", encoding="utf-8") as out:

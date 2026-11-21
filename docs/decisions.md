@@ -29,6 +29,7 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-023 | 2026-11-20 | Budget exhaustion stops a game instead of falling back | Accepted |
 | D-024 | 2026-11-20 | Keep medium noise as the main setting; decision-level benchmark carries the main comparison | Accepted |
 | D-025 | 2026-11-20 | Local open-weight model (Qwen 2.5 7B via Ollama) for the main LLM experiments | Accepted |
+| D-026 | 2026-11-20 | LLM experiments at concurrency 2 (Ollama 2 slots, model fully in VRAM) | Accepted |
 
 ---
 
@@ -195,3 +196,9 @@ Each entry records one design decision: the context, what we chose, the alternat
 - **Measured (first live check).** SA ≈ 3.7 s and ~2.3 k input tokens per decision; MA ≈ 32 s, 4 calls, ~9.4 k input and ~1.4 k output tokens per decision; the first call of a session pays ~70 s to load the model. Cost is zero; tokens and latency are still reported, and the cost analysis for RQ2 uses tokens and latency (API prices can be applied to the token counts afterwards).
 - **Observed quirk.** The model sometimes gives confidence on a 0–100 scale; `clamp01` reads values in (1, 100] as percentages.
 - **Consequences.** Results describe a small open model; whether they transfer to a frontier model is tested later with Claude (E8) and stated as a limitation until then.
+
+## D-026: Concurrency 2 for LLM experiments
+
+- **Context.** The first experiment queue (E4 onwards) was stopped by Claude Code's memory guard when free RAM fell critically low. With `OLLAMA_NUM_PARALLEL=4` and an 8192-token context the model needs 6.8 GB, of which ~0.6 GB spilled from the 8 GB GPU into system RAM, on top of 4 concurrent decision threads.
+- **Decision.** Ollama runs with 2 parallel slots (model 5.5 GB, entirely in VRAM) and `scripts/run_queue.py --concurrency 2` passes 2 threads to positions runs and 2 workers to tournaments. Measured: 8 GB RAM free under load.
+- **Consequences.** Lower throughput per run but no memory pressure. Per-decision latencies reported from E1 (4-way load) and later runs (2-way load) are not directly comparable; latency comparisons are made within one run.

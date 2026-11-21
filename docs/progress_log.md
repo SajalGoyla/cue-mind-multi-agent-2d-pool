@@ -158,7 +158,7 @@ One entry per working session: what was done, how it was tested, where outputs a
 - **Why (failure analysis, `docs/failure_analysis_e1.md`):** the safety specialist recommends a safety in 96 % of positions, so it is a constant rather than selective voice; the coordinator sometimes follows it over a 100 % pot (pos_0113). The largest regrets come from choosing between variants of the same pot (spin/speed) where the oracle values the leave or scratch risk much more than the model does; S01 (the highest pot probability by menu order) is the oracle's best shot in only 38 % of positions, yet B2 picks it 72 %, SA 62 %, MA 56 %.
 - Demo sample runs S1–S4 exported from these logs (`results/demo_assets/`).
 
-**Running (queue, `results/queue.log`):** E4 → E10 → E2 (15 paired seeds) → E5 (low/high) → E6 → analyze.
+**Running (queue, `results/queue.log`):** E4 → E10 → E2 (15 paired seeds) → E5 (low/high) → E6 → analyze. The first queue was stopped by Claude Code's memory guard (system RAM critically low) after 33 E4 decisions; restarted at concurrency 2 with Ollama at 2 slots so the model fits entirely in VRAM (D-026); the 33 finished decisions are kept.
 
 **Open / next**
 - Categorise the failure cases (fill in `docs/failure_analysis_e1.md`).
