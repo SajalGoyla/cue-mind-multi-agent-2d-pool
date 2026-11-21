@@ -199,7 +199,7 @@ class OllamaClient:
                     raise httpx.HTTPStatusError("server error", request=r.request, response=r)
                 r.raise_for_status()
                 return r.json()
-            except (httpx.ConnectError, httpx.ReadTimeout, httpx.RemoteProtocolError) as exc:
+            except httpx.TransportError as exc:  # connect/read errors, resets, timeouts
                 last = exc
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code < 500:
@@ -241,7 +241,7 @@ class OllamaClient:
                 err = "stop_reason=length (output truncated)"
             else:
                 parsed = schema.model_validate_json(raw)
-        except (httpx.ConnectError, httpx.ReadTimeout, httpx.RemoteProtocolError) as exc:
+        except httpx.TransportError as exc:
             err = f"connection: is `ollama serve` running at {self.host}? ({exc})"
         except httpx.HTTPStatusError as exc:
             err = f"http_{exc.response.status_code}: {exc.response.text[:200]}"

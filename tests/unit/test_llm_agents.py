@@ -186,8 +186,10 @@ def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
 
     def flaky(url, json=None, timeout=None):
         calls["n"] += 1
-        if calls["n"] <= 2:
+        if calls["n"] == 1:
             raise httpx.ConnectError("restarting")
+        if calls["n"] == 2:
+            raise httpx.ReadError("connection forcibly closed")
         return Resp()
 
     monkeypatch.setattr(httpx, "post", flaky)
