@@ -128,6 +128,9 @@ Simulation is free (CPU). LLM cost per decision is logged with token counts. Pri
 | HTTP 404 `Publisher model ... not found` | The model is not enabled in that region/project; use `VERTEX_REGION=global` or enable the model |
 | `MemoryError` / "paging file is too small" | Too many worker processes for your RAM; lower `--workers` |
 | First run is very slow | Numba JIT compilation (once per install, ~1 min) |
+| `Assertion failed: thread != nullptr ... threadWin32Impl.cxx` when the demo or a test exits | Harmless Panda3D message at interpreter shutdown (pooltool imports Panda3D; Streamlit runs the script in a worker thread). Results are unaffected |
+| `connection: is ollama serve running` | Start the local model server: `ollama serve` (PowerShell: `$env:OLLAMA_NUM_PARALLEL="2"; ollama serve`) |
+| Runs stopped for low memory | Use `--threads 2` / `--workers 2` and `OLLAMA_NUM_PARALLEL=2` so the model fits in GPU memory (D-026) |
 
 ## Credits
 
