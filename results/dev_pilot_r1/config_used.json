@@ -1,0 +1,27 @@
+{
+  "exp_id": "dev_pilot_r1",
+  "positions": [
+    "data/positions/dev.jsonl"
+  ],
+  "systems": [
+    "sa",
+    "ma"
+  ],
+  "access_levels": [
+    "L2"
+  ],
+  "repeats": 1,
+  "threads": 4,
+  "llm": {
+    "llm": "ollama"
+  },
+  "git_commit": "32b59f3",
+  "cli": {
+    "config": "experiments/configs/dev_pilot_r1.yaml",
+    "limit": null,
+    "llm": null,
+    "max_usd": null,
+    "threads": 4,
+    "out": null
+  }
+}

@@ -30,6 +30,46 @@ Errors: 0 games; shot-cap draws: 0.
 
 Figure: `results/figures/e0_noise_win_rates.png`
 
+## dev_pilot: decision-level results (`results/dev_pilot/decisions.jsonl`)
+
+| system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
+|---|---|---|---|---|---|---|---|---|---|
+| b2 | L2 | 60 | 0.359 [0.253, 0.475] | 0.47 | 0.46 | 0.00 | 0.0 | 0.0000 | 0.0 |
+| ma | L2 | 60 | 0.423 [0.302, 0.555] | 0.47 | 0.34 | 0.00 | 4.0 | 0.0000 | 42.8 |
+| sa | L2 | 60 | 0.412 [0.301, 0.535] | 0.45 | 0.39 | 0.00 | 1.0 | 0.0000 | 14.0 |
+
+Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
+
+| info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
+|---|---|---|---|---|---|---|
+| L2 | sa | 60 | +0.011 | 0.812 | 0.812 | +0.06 |
+| L2 | b2 | 60 | +0.064 | 0.215 | 0.43 | +0.25 |
+
+Figure: `results/figures/dev_pilot_regret.png`
+
+Figure: `results/figures/dev_pilot_regret_by_situation.png`
+
+Figure: `results/figures/dev_pilot_cost_quality.png`
+
+## dev_pilot_r1: decision-level results (`results/dev_pilot_r1/decisions.jsonl`)
+
+| system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
+|---|---|---|---|---|---|---|---|---|---|
+| ma | L2 | 60 | 0.351 [0.249, 0.464] | 0.47 | 0.42 | 0.00 | 4.0 | 0.0000 | 41.2 |
+| sa | L2 | 60 | 0.380 [0.277, 0.493] | 0.45 | 0.43 | 0.00 | 1.0 | 0.0000 | 13.8 |
+
+Paired comparisons of regret (MA minus other; negative = MA better), Wilcoxon signed-rank, Holm-adjusted:
+
+| info | MA vs | n | mean diff | p | p (Holm) | rank-biserial |
+|---|---|---|---|---|---|---|
+| L2 | sa | 60 | -0.029 | 0.463 | 0.463 | -0.18 |
+
+Figure: `results/figures/dev_pilot_r1_regret.png`
+
+Figure: `results/figures/dev_pilot_r1_regret_by_situation.png`
+
+Figure: `results/figures/dev_pilot_r1_cost_quality.png`
+
 ## e1_bots: decision-level results (`results/e1_bots/decisions.jsonl`)
 
 | system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |
@@ -47,3 +87,13 @@ Figure: `results/figures/e0_noise_win_rates.png`
 Figure: `results/figures/e1_bots_regret.png`
 
 Figure: `results/figures/e1_bots_regret_by_situation.png`
+
+## Prompt iteration on the dev split (`results/prompt_iterations.csv`)
+
+| round | prompt version | system | n | mean regret | top-1 | safety rate | change |
+|---|---|---|---|---|---|---|---|
+| 0 | - | b2 | 60 | 0.359 | 0.47 | 0.13 | initial prompts |
+| 0 | 116380aaf083 | sa | 60 | 0.412 | 0.45 | 0.33 | initial prompts |
+| 0 | 116380aaf083 | ma | 60 | 0.423 | 0.47 | 0.32 | initial prompts |
+| 1 | 070cfbefbf9d | sa | 60 | 0.380 | 0.45 | 0.20 | shared rule: pot probability first; specialist top = highest score; coordinator must not default to one specialist |
+| 1 | 070cfbefbf9d | ma | 60 | 0.351 | 0.47 | 0.12 | shared rule: pot probability first; specialist top = highest score; coordinator must not default to one specialist |

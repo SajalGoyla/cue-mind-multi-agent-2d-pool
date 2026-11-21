@@ -224,6 +224,15 @@ def main() -> None:
           "Do not edit by hand."]
     tournaments(md)
     positions(md)
+    it = ROOT / "results" / "prompt_iterations.csv"
+    if it.exists():
+        df = pd.read_csv(it)
+        md += ["\n## Prompt iteration on the dev split (`results/prompt_iterations.csv`)\n",
+               "| round | prompt version | system | n | mean regret | top-1 | safety rate | change |",
+               "|---|---|---|---|---|---|---|---|"]
+        for r in df.itertuples():
+            md.append(f"| {r.round} | {r.prompt_version} | {r.system} | {r.n} | {r.mean_regret:.3f} | "
+                      f"{r.top1:.2f} | {r.safety_rate:.2f} | {r.change} |")
     (ROOT / "results" / "summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     print("\n".join(md))
 
