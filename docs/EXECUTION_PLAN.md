@@ -1,5 +1,7 @@
 # CueMind: End-to-End Execution Plan (for an LLM coding agent)
 
+> **Superseded for v2 (2026-11-25).** This plan describes v1 (positions benchmark, oracle, access levels, SA-vote, critic, Claude on Vertex). The current design is decision **D-029** in [`decisions.md`](decisions.md) and [`architecture.md`](architecture.md). Kept for history; the v1 code and results are on `main` at `6c96b93`.
+
 > **Who this is for.** This file is written to be handed to an LLM coding agent (e.g. Claude Code) as its working brief. It is self-contained: an agent that follows it phase by phase should produce the full system, the dataset, all evaluations, the demo UI, the sample runs for the class presentation, and the material for the report.
 >
 > **Status on 2026-11-20.** We have the one-page proposal (`Final_Project_Proposal_LLM_Based_Gen_AI.pdf`), the course rubric (`COMSE6998_007_Fall_2026_project_deliverables_doc.pdf`), and a working feasibility spike (`cuemind-feasibility/`, see its `FEASIBILITY_REPORT.md`). No production code exists yet. The older `plan.md` (2026-10-15) is **superseded** by this file wherever they differ; this file follows the final proposal.

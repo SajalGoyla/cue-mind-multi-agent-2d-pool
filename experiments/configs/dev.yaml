@@ -1,0 +1,14 @@
+# Prompt development and floor check on dev seeds only (never the main seeds).
+# Read the traces in results/dev/raw/, change prompts at most twice, then freeze (git tag
+# prompts-v2). Floor check: if SA wins < 10% against B here, stop and rethink before main.yaml.
+exp_id: dev
+pairings:
+  - [b, sa]
+  - [b, ma]
+seeds: {start: 2000, count: 5}
+noise_levels: [none]       # chosen by pilot_bots (2026-11-25): B beat B1 90% [80, 95] at none, 62% [49, 73] at low
+max_shots: 150
+workers: 1
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}

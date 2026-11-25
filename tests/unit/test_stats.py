@@ -1,6 +1,6 @@
 import pytest
 
-from cuemind.eval.stats import bootstrap_mean_ci, holm, sign_test, wilcoxon_paired, wilson_ci
+from cuemind.eval.stats import bootstrap_mean_ci, sign_test, wilson_ci
 
 
 def test_wilson_ci_known_values():
@@ -18,14 +18,6 @@ def test_bootstrap_ci_contains_mean_and_is_deterministic():
     assert bootstrap_mean_ci(vals, n_boot=2000, seed=1) == (m, lo, hi)
 
 
-def test_sign_and_wilcoxon():
+def test_sign_test():
     assert sign_test([1] * 10) == pytest.approx(2 / 1024)
     assert sign_test([0, 0]) == 1.0
-    p, r = wilcoxon_paired([3, 4, 5, 6, 7, 8], [1, 1, 1, 1, 1, 1])
-    assert p < 0.05 and r == pytest.approx(1.0)
-
-
-def test_holm_adjustment():
-    adj = holm([0.01, 0.04, 0.03])
-    assert adj[0] == pytest.approx(0.03) and adj[2] == pytest.approx(0.06)
-    assert adj[1] == pytest.approx(0.06)  # monotone

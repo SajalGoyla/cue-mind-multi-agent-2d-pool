@@ -1,12 +1,12 @@
-"""Deterministic candidate generation (access level L0: geometry only).
+"""Deterministic candidate generation (geometry only).
 
 * Pots: every viable direct pot x power {soft, medium, firm} x spin {draw, stun, follow}.
 * Safeties: contact shots on each legal target at a few cut angles and soft/medium speed,
   kept only if a noise-free simulation of the shot is legal (no foul, no game loss). This
-  validity filter uses the simulator, but no statistics from it are shown at level L0.
+  validity filter uses the simulator, but its result is never shown to anyone.
 * Contact-only fallback: aim at the centre of each legal ball, used when nothing else exists.
 
-The generator only proposes shots. Simulation statistics are added by `annotate.py`.
+The generator only proposes shots; `pipeline.build_menu` selects the menu from them.
 """
 
 from __future__ import annotations

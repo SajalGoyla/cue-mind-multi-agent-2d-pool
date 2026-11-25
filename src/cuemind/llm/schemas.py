@@ -1,7 +1,7 @@
-"""Structured-output schemas for every LLM agent (validated by the SDK and again in code).
+"""Structured-output schemas for every LLM agent (enforced by the model server and again in code).
 
-Numeric ranges and word limits are stated in the prompts and enforced in code, not in the
-JSON schema, to keep the schemas within what structured outputs support.
+Word limits and the shortlist length are stated in the prompts and enforced in code, not in
+the JSON schema.
 """
 
 from __future__ import annotations
@@ -11,40 +11,37 @@ from typing import Literal
 from pydantic import BaseModel
 
 IntentLit = Literal["offense", "position", "safety"]
-AgentLit = Literal["offense", "position", "safety"]
+AgentLit = Literal["offense", "position", "defense"]
 
 
 class SingleDecision(BaseModel):
+    """SA's answer."""
+
     shot_id: str
     intent: IntentLit
     rationale: str
     confidence: float
 
 
-class Assessment(BaseModel):
+class ShortlistItem(BaseModel):
     shot_id: str
-    score: int
-    note: str
+    reason: str
 
 
-class SpecialistReport(BaseModel):
-    assessments: list[Assessment]
-    top_choice: str
-    summary: str
+class SpecialistShortlist(BaseModel):
+    """A specialist's ranked shortlist (best first)."""
+
+    shortlist: list[ShortlistItem]
 
 
 class CoordinatorDecision(BaseModel):
+    """The MA coordinator's answer; the shot must come from the specialists' shortlists."""
+
     shot_id: str
     intent: IntentLit
     rationale: str
     confidence: float
-    overruled: list[AgentLit]
-
-
-class CriticVerdict(BaseModel):
-    approve: bool
-    reason: str
-    alternative_shot_id: str | None
+    followed: list[AgentLit]
 
 
 def clamp01(x: float) -> float:

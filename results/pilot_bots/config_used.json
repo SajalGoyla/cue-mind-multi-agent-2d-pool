@@ -1,0 +1,84 @@
+{
+  "config": {
+    "exp_id": "pilot_bots",
+    "pairings": [
+      [
+        "b",
+        "b1"
+      ],
+      [
+        "b",
+        "b"
+      ]
+    ],
+    "seeds": {
+      "start": 1000,
+      "count": 30
+    },
+    "noise_levels": [
+      "none",
+      "low"
+    ],
+    "max_shots": 150,
+    "workers": 6
+  },
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1024,
+    1025,
+    1026,
+    1027,
+    1028,
+    1029
+  ],
+  "noise_levels": [
+    "none",
+    "low"
+  ],
+  "menu": {
+    "max_pot_targets": 4,
+    "speeds": [
+      "medium"
+    ],
+    "spins": [
+      "draw",
+      "stun",
+      "follow"
+    ],
+    "max_safeties": 3,
+    "shuffle": true
+  },
+  "policy_kwargs": {},
+  "git_commit": "6c96b93",
+  "cli": {
+    "config": "experiments/configs/pilot_bots.yaml",
+    "workers": 7,
+    "seeds": null,
+    "noise": null,
+    "llm": null,
+    "out": null
+  }
+}

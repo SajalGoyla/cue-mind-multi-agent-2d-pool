@@ -1,0 +1,12 @@
+# Pilot (bots only, CPU, no LLM): which execution noise makes decision quality visible in games?
+# Pass criterion (D-029): B beats B1 with a Wilson 95% interval above 50% (ideally >= 60%);
+# B vs B is a balance check (breaker win rate ~50%). Choose `none` if it passes, else `low`,
+# and copy the chosen level into dev.yaml and main.yaml.
+exp_id: pilot_bots
+pairings:
+  - [b, b1]
+  - [b, b]
+seeds: {start: 1000, count: 30}
+noise_levels: [none, low]
+max_shots: 150
+workers: 6

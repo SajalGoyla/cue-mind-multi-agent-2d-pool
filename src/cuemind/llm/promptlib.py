@@ -1,13 +1,16 @@
 """Prompt assembly. Prompt text lives in llm/prompts/*.md (versioned; hash logged per call).
 
-Fairness (plan section 2.3, item 6): the single agent's system prompt contains the
-union of the three specialists' strategy knowledge, verbatim. Tested in tests/unit.
+Who gets what (fairness: SA's system prompt holds every strategy block a specialist has):
+
+    SA            rules + offense + position + defense knowledge + role_single
+    specialist X  rules + X knowledge + role_specialist            (sees the full raw menu)
+    coordinator   rules + all three knowledge blocks + role_coordinator
+                  (sees the position and only the shortlisted shots with the specialists' reasons)
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -16,7 +19,8 @@ from cuemind.candidates.model import Candidate
 from cuemind.sim.state import TableState
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
-PERSPECTIVES = ("offense", "position", "safety")
+PERSPECTIVES = ("offense", "position", "defense")
+SHORTLIST_K = 3
 
 
 @lru_cache(maxsize=None)
@@ -37,16 +41,12 @@ def system_single() -> str:
 
 
 def system_specialist(perspective: str) -> str:
-    role = _read("role_specialist").replace("{perspective}", perspective)
+    role = _read("role_specialist").replace("{perspective}", perspective).replace("{k}", str(SHORTLIST_K))
     return "\n\n".join([_read("rules"), knowledge(perspective), role])
 
 
 def system_coordinator() -> str:
     return "\n\n".join([_read("rules"), all_knowledge(), _read("role_coordinator")])
-
-
-def system_critic() -> str:
-    return "\n\n".join([_read("rules"), all_knowledge(), _read("role_critic")])
 
 
 def prompt_version() -> str:
@@ -72,14 +72,18 @@ def history_text(history: list[dict], shooter: str) -> str:
     return "\n".join(lines)
 
 
-def decision_context_text(state: TableState, cands: list[Candidate], history: list[dict],
-                          ball_in_hand: bool = False) -> str:
+def position_text(state: TableState, history: list[dict], ball_in_hand: bool = False) -> str:
     parts = ["## Position", state_summary(state)]
     if ball_in_hand:
         parts.append("You had ball in hand; the cue ball has already been placed.")
-    parts += ["## Recent shots", history_text(history, state.shooter),
-              "## Candidate shots", candidate_table(cands)]
+    parts += ["## Recent shots", history_text(history, state.shooter)]
     return "\n".join(parts)
+
+
+def decision_context_text(state: TableState, cands: list[Candidate], history: list[dict],
+                          ball_in_hand: bool = False) -> str:
+    return (position_text(state, history, ball_in_hand)
+            + "\n## Candidate shots\n" + candidate_table(cands))
 
 
 def user_single(ctx_text: str) -> str:
@@ -87,15 +91,19 @@ def user_single(ctx_text: str) -> str:
 
 
 def user_specialist(ctx_text: str, perspective: str) -> str:
-    return ctx_text + f"\n\nAssess every candidate from the {perspective} perspective only."
+    return (ctx_text + f"\n\nFrom the {perspective} perspective only, shortlist up to "
+            f"{SHORTLIST_K} shot ids, best first.")
 
 
-def user_coordinator(ctx_text: str, reports: dict[str, dict]) -> str:
-    rep = "\n".join(f"### {name} specialist\n{json.dumps(r, ensure_ascii=False)}"
-                    for name, r in reports.items())
-    return f"{ctx_text}\n\n## Specialist reports\n{rep}\n\nChoose one shot id."
-
-
-def user_critic(ctx_text: str, decision: dict) -> str:
-    return (f"{ctx_text}\n\n## Chosen shot\n{json.dumps(decision, ensure_ascii=False)}\n\n"
-            "Approve or reject this choice.")
+def user_coordinator(pos_text: str, shortlisted: list[Candidate], reports: dict[str, dict]) -> str:
+    lines = [pos_text, "## Shortlisted shots", candidate_table(shortlisted),
+             "## Specialist shortlists (best first)"]
+    for name, rep in reports.items():
+        lines.append(f"### {name} specialist")
+        if "shortlist" not in rep:
+            lines.append(f"(no report: {rep.get('error', 'failed')})")
+            continue
+        for rank, item in enumerate(rep["shortlist"], 1):
+            lines.append(f"{rank}. {item['shot_id']}: {item['reason']}")
+    lines.append("\nChoose one shot id from the shortlisted shots.")
+    return "\n".join(lines)

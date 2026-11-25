@@ -6,32 +6,33 @@ Each entry records one design decision: the context, what we chose, the alternat
 |---|---|---|---|
 | D-001 | 2026-11-20 | Use pooltool as the physics simulator | Accepted |
 | D-002 | 2026-11-20 | Own 8-ball rules layer instead of pooltool's `_EightBall` | Accepted |
-| D-003 | 2026-11-20 | LLM systems choose among simulated candidates by `shot_id` | Accepted |
+| D-003 | 2026-11-20 | LLM systems choose among simulated candidates by `shot_id` | Accepted (menus are raw in v2, D-029) |
 | D-004 | 2026-11-20 | Common random numbers for execution noise | Accepted |
 | D-005 | 2026-11-20 | Shared, non-LLM break and ball-in-hand policies | Accepted |
 | D-006 | 2026-11-20 | Candidate menu: pots × power × spin, safeties, contact fallback | Accepted |
-| D-007 | 2026-11-20 | Geometry-only (L0) pruning is round-robin over pot geometries | Accepted |
+| D-007 | 2026-11-20 | Geometry-only (L0) pruning is round-robin over pot geometries | Superseded (D-029) |
 | D-008 | 2026-11-20 | Deterministic rack and cue ball on the head spot | Accepted |
-| D-009 | 2026-11-20 | Policy failures never crash a game: shared fallback rule | Accepted |
-| D-010 | 2026-11-20 | Simulation access levels L0/L1/L2 and two-stage pruning | Accepted |
-| D-011 | 2026-11-20 | B2 search-bot objective | Accepted (weights provisional until E0) |
+| D-009 | 2026-11-20 | Policy failures never crash a game: shared fallback rule | Accepted (fallback is geometric in v2) |
+| D-010 | 2026-11-20 | Simulation access levels L0/L1/L2 and two-stage pruning | Superseded (D-029) |
+| D-011 | 2026-11-20 | B2 search-bot objective | Accepted (B in v2, D-029) |
 | D-012 | 2026-11-20 | Positions shown to LLMs in diamonds and named zones | Accepted |
 | D-013 | 2026-11-20 | Assign rack ball numbers ourselves (cross-process determinism) | Accepted |
 | D-014 | 2026-11-20 | Retry pooltool failures with a negligible aim nudge | Accepted |
 | D-015 | 2026-11-20 | Pin `httpx` to the stable 0.28 line | Accepted |
-| D-016 | 2026-11-20 | LLM layer: structured outputs, cache, budget, fake LLM, one retry | Accepted |
-| D-017 | 2026-11-20 | Multi-agent graph in LangGraph; coordinator sees all strategy knowledge | Accepted |
+| D-016 | 2026-11-20 | LLM layer: structured outputs, cache, budget, fake LLM, one retry | Partly superseded (D-029) |
+| D-017 | 2026-11-20 | Multi-agent graph in LangGraph; coordinator sees all strategy knowledge | Superseded (D-029) |
 | D-018 | 2026-11-20 | Tournament protocol: paired seeds, swapped seats, resumable, process pool | Accepted |
-| D-019 | 2026-11-20 | Positions benchmark: frozen annotated menus, oracle EIV, decision-level metrics | Accepted |
+| D-019 | 2026-11-20 | Positions benchmark: frozen annotated menus, oracle EIV, decision-level metrics | Superseded (D-029) |
 | D-020 | 2026-11-20 | Demo: Streamlit + Plotly, offline / live / cache-only modes | Accepted |
 | D-021 | 2026-11-20 | Default 10 worker processes (memory bound) | Accepted |
-| D-022 | 2026-11-20 | Hand-made hard cases with oracle-drafted, human-reviewed labels | Accepted |
-| D-023 | 2026-11-20 | Budget exhaustion stops a game instead of falling back | Accepted |
-| D-024 | 2026-11-20 | Keep medium noise as the main setting; decision-level benchmark carries the main comparison | Accepted |
+| D-022 | 2026-11-20 | Hand-made hard cases with oracle-drafted, human-reviewed labels | Superseded (D-029) |
+| D-023 | 2026-11-20 | Budget exhaustion stops a game instead of falling back | Superseded (D-029) |
+| D-024 | 2026-11-20 | Keep medium noise as the main setting; decision-level benchmark carries the main comparison | Superseded (D-029) |
 | D-025 | 2026-11-20 | Local open-weight model (Qwen 2.5 7B via Ollama) for the main LLM experiments | Accepted |
-| D-026 | 2026-11-20 | LLM experiments at concurrency 2 (Ollama 2 slots, model fully in VRAM) | Accepted |
+| D-026 | 2026-11-20 | LLM experiments at concurrency 2 (Ollama 2 slots, model fully in VRAM) | Accepted (operational) |
 | D-027 | 2026-11-20 | Retry local-model infrastructure failures instead of recording fallbacks | Accepted |
 | D-028 | 2026-11-20 | Watchdog restarts Ollama when its runner's RAM exceeds 3.5 GB | Accepted |
+| D-029 | 2026-11-25 | v2: raw menus, game play only (B vs B, B vs SA, B vs MA), shortlist multi-agent | Accepted |
 
 ---
 
@@ -218,3 +219,23 @@ Each entry records one design decision: the context, what we chose, the alternat
 - **Why it is safe for results.** Requests in flight during a restart fail at the HTTP level and are retried by the client (D-027); they never reach the agents' fallback path. Restart times are logged in `results/queue.log`. Decisions are unaffected: generation is seeded and model weights are identical.
 - **Procedure note.** The queue was stopped cleanly at 678 / 1,620 E4 decisions (all saved) to switch to the new client code, then resumed.
 - **Observed at the first restart (E4).** 3 calls failed with a connection reset (`httpx.ReadError`), which the first retry list did not cover; each went through the agents' corrective retry and succeeded (0 fallbacks in 800 LLM decisions), so those decisions carry a slightly different second prompt. The client now retries every `httpx.TransportError`; later experiment steps use the fixed client.
+- **v2 note.** `run_queue.py` was removed in v2; the watchdog runs standalone (`python scripts/ollama_watchdog.py`). It was written for Windows and has not been tested on macOS.
+
+## D-029: v2 — raw menus, game play only, shortlist multi-agent
+
+- **Context (evidence from v1, on `main` at `6c96b93`).**
+  - *The positions benchmark was circular.* The LLMs read statistics from 8 noisy pooltool runs per candidate; the oracle graded with 24 more runs of the same simulator and noise model and nearly the same ingredients (own pots ↔ `p_pot`, fouls ↔ `p_foul`, −0.75 × opponent ease ↔ `opp_threat`, same ease function). B2's objective on the 8-run statistics correlated 0.70 with oracle EIV over the 1,460 test candidates, so B2 led largely because its objective resembled the scorer.
+  - *The oracle was too noisy for close calls.* Median SE per candidate 0.20, median gap between best and second-best shot 0.18; the best shot was clearly separated (gap > 2 combined SE) in 17 of 180 test positions. The SA–MA difference (0.307 vs 0.294 regret) was far below this and below sample-to-sample variation (E10, ~0.1).
+  - *E4's geometry-only level was not simulation-free.* It re-described the frozen L2 menu, so which shots were listed and their order (S01 = highest simulated pot probability) came from simulation; at L0, SA picked S01 in 52 % of positions and B2 in 87 %.
+  - *MA's specialists behaved poorly:* the safety specialist recommended a safety in 96 % of positions, and 0–10 scores for every candidate were often near-identical across specialists.
+  - *Games:* B2 vs B1 was 52–54 % at low, medium and high noise (E0, E0b); 0 of 448 logged games hit the 150-shot cap.
+- **Decision.**
+  1. Three systems: **B** (the D-011 search bot, now simulating privately), **SA** (one call), **MA v2**. B1 stays for the pilot only. Removed: B0, SA-vote, MA+critic, MA ablations, the Claude/Vertex client and budget guard (Vertex never gave quota, D-025), the positions benchmark, the oracle, hard cases, access levels L0/L1/L2 and every v1 experiment script and config.
+  2. **LLMs receive raw menus only** (`candidates/pipeline.py`): the 4 geometrically easiest target/pocket pairs × medium speed × draw/stun/follow, plus up to 3 safeties, in a seeded random order. Each line shows ball, pocket, speed, spin, cut angle and a difficulty word. Safeties keep the noise-free legality filter as a validity check; its result is never shown. The prompts explain what cut angle, speed and spin do, since no outcomes are given.
+  3. **B simulates every menu candidate privately** with the game's execution noise (one run when noise is zero, since the result is then exact; 8 runs otherwise) and maximises the D-011 objective. B has more information than SA and MA by design: it is the common yardstick.
+  4. **MA v2** (`agents/graph_multi.py`): offense, position and defense specialists (each with only its own strategy block) return ranked shortlists of up to 3 ids with reasons; the coordinator (all strategy blocks) sees the position and only the shortlisted shots and must pick one of them. When all three rank the same shot first, it is played without a coordinator call. The defense prompt states that the lowest-risk option is often an easy pot.
+  5. **Evaluation is game play only:** B vs B (balance check), B vs SA and B vs MA on the same seeds, both seat orders, common random numbers. Primary metric: win rate against B (Wilson 95 % CI); SA vs MA is compared seed by seed through their scores against B (bootstrap CI, sign test). Secondary: pot success, balls per inning, fouls, safety rate, fallback rate, calls/tokens/latency per decision, and how games ended.
+  6. **Noise is set by a bots-only pilot** (`configs/pilot_bots.yaml`): `none` if B beats B1 clearly there, else `low`. Then a floor check on dev seeds (SA must win at least ~10 % against B) before the main run.
+  7. The shared fallback rule now uses geometry only (pots first, then highest ease), since no policy-visible statistics exist.
+- **Fixed on the way.** The position text told the model "any foul … on the 8 loses", but the rules only make a foul a loss when the 8 drops; the text now matches the rules.
+- **Consequences.** No per-decision ground truth: error analysis comes from game logs. Statistical resolution is limited by the number of games (a 95 % interval is about ±13 points at 60 games). Removing per-shot rollouts from menu building makes games much cheaper (physics was ~85 % of v1 decision time, D-024); B's own simulation is the main remaining simulation cost.

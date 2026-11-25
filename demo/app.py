@@ -1,12 +1,11 @@
-"""CueMind demo: watch a single agent and a team of agents choose a pool shot.
+"""CueMind demo: B, a single agent and a team of agents choose a pool shot from the same raw menu.
 
-Launch:  streamlit run demo/app.py
+Launch (from the repository root):  streamlit run demo/app.py
 
 Modes (sidebar):
-* Local model (Ollama) - open-weight model on this machine (default qwen2.5:7b-instruct);
-                         decisions made before return instantly and are labelled "cached".
-* Claude (Vertex)      - real calls through Vertex AI (.env), with the same response cache.
 * Offline (fake LLM)   - no model at all; deterministic stand-in (always works).
+* Local model (Ollama) - open-weight model on this machine (default qwen2.5:7b-instruct);
+                         decisions made before come back instantly from the response cache.
 """
 
 from __future__ import annotations
@@ -28,11 +27,11 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env")
 
 from cuemind.candidates.model import Candidate  # noqa: E402
-from cuemind.candidates.pipeline import PrepConfig, prepare  # noqa: E402
-from cuemind.eval.positions import load_positions, menu_at_level, score_choice  # noqa: E402
+from cuemind.candidates.pipeline import build_menu  # noqa: E402
 from cuemind.game.rules import Call, judge  # noqa: E402
 from cuemind.policies.base import DecisionContext  # noqa: E402
 from cuemind.policies.registry import make_llm_client  # noqa: E402
+from cuemind.policies.search_bot import SearchBot  # noqa: E402
 from cuemind.sim.execute import Stroke, extract_events, simulate, warm_up  # noqa: E402
 from cuemind.sim.noise import get_noise, rng_for  # noqa: E402
 from cuemind.sim.state import TableState, to_system, validate  # noqa: E402
@@ -40,6 +39,7 @@ from cuemind.sim.trajectories import trajectories  # noqa: E402
 from cuemind.viz.table_plot import animation_figure, table_figure  # noqa: E402
 
 st.set_page_config(page_title="CueMind", layout="wide")
+MODES = ["Offline (fake LLM)", "Local model (Ollama)"]
 
 
 # ----------------------------------------------------------------------------- cached work
@@ -50,10 +50,9 @@ def _warm() -> bool:
 
 
 @st.cache_data(show_spinner=False)
-def menu_for(state_json: str, access: str, noise: str) -> list[dict]:
+def menu_for(state_json: str, key: str) -> list[dict]:
     state = TableState.model_validate_json(state_json)
-    cands = prepare(state, PrepConfig(access_level=access, noise=noise), rollout_key=("demo",))
-    return [c.model_dump() for c in cands]
+    return [c.model_dump() for c in build_menu(state, menu_key=("demo", key))]
 
 
 @st.cache_data(show_spinner=False)
@@ -65,65 +64,44 @@ def get_policies(mode: str):
     from cuemind.policies.multi_agent import MultiAgent
     from cuemind.policies.single_agent import SingleAgent
 
-    if mode == "Offline (fake LLM)":
-        client = make_llm_client(llm="fake")
-    elif mode == "Local model (Ollama)":
-        client = make_llm_client(llm="ollama")
-    else:
-        client = make_llm_client(llm="claude", run_id="demo", max_usd=2.0)
-    return SingleAgent(client), MultiAgent(client)
+    client = make_llm_client(llm="fake" if mode == MODES[0] else "ollama")
+    return SearchBot(), SingleAgent(client), MultiAgent(client)
 
 
 def load_demo_positions() -> dict[str, dict]:
     data = json.loads((ROOT / "demo" / "sample_inputs.json").read_text(encoding="utf-8"))
-    out = {p["name"]: {"state": p["state"]} for p in data["positions"]}
-    records = {}
-    for f in ("test.jsonl", "hard_cases.jsonl"):
-        path = ROOT / "data" / "positions" / f
-        if path.exists():
-            records.update({r["position_id"]: r for r in load_positions(path)})
-    runs = ROOT / "results" / "demo_assets" / "sample_runs.json"
-    if runs.exists():  # sample runs picked from real experiment logs (scripts/export_demo_assets.py)
-        for run in json.loads(runs.read_text(encoding="utf-8"))["runs"]:
-            rec = records.get(run["position_id"])
-            entry = {"state": run["state"]}
-            if rec is not None:
-                entry["record"] = rec
-            out[f"{run['slot']} ({run['position_id']}, from {runs.parent.parent.name} logs)"] = entry
-    hard = ROOT / "data" / "positions" / "hard_cases.jsonl"
-    if hard.exists():
-        for rec in load_positions(hard):
-            out[f"Hard case {rec['position_id']} ({rec.get('label_status', 'draft')})"] = {
-                "state": rec["state"], "record": rec}
-    test = ROOT / "data" / "positions" / "test.jsonl"
-    if test.exists():
-        for rec in load_positions(test)[:40]:
-            out[f"Benchmark {rec['position_id']} ({rec['difficulty']}, {', '.join(rec['tags'])})"] = {
-                "state": rec["state"], "record": rec}
-    return out
+    return {p["name"]: p["state"] for p in data["positions"]}
 
 
 # ----------------------------------------------------------------------------- UI pieces
 def usage_line(u: dict) -> str:
+    if not u.get("calls"):
+        return "no LLM calls"
     cached = f", {int(u.get('cached_calls', 0))} cached" if u.get("cached_calls") else ""
-    return (f"{int(u.get('calls', 0))} calls{cached} · {int(u.get('input_tokens', 0)):,} in / "
-            f"{int(u.get('output_tokens', 0)):,} out tokens · ${u.get('cost_usd', 0):.4f} · "
-            f"{u.get('latency_s', 0):.1f} s")
+    return (f"{int(u.get('calls', 0))} LLM calls{cached} · {int(u.get('input_tokens', 0)):,} in / "
+            f"{int(u.get('output_tokens', 0)):,} out tokens · {u.get('latency_s', 0):.1f} s")
 
 
 def decision_card(title: str, d, menu: list[Candidate]) -> None:
     st.markdown(f"#### {title}")
     if d is None:
-        st.info("Not run yet.")
+        st.info("Failed; see the message above.")
         return
     c = next((x for x in menu if x.shot_id == d.shot_id), None)
     badge = " (fallback)" if d.fallback else ""
-    st.markdown(f"**Choice: {d.shot_id}{badge}**, intent *{d.intent}*" +
-                (f", confidence {d.confidence:.2f}" if d.confidence is not None else ""))
+    st.markdown(f"**Choice: {d.shot_id}{badge}**, intent *{d.intent}*")
     if c is not None:
         st.caption(c.description)
     st.write(d.rationale)
     st.caption(usage_line(d.usage))
+
+
+def b_details(d) -> None:
+    sim = (d.trace or {}).get("sim", {}).get(d.shot_id)
+    if sim:
+        st.caption(f"B's private simulation of {d.shot_id} ({d.trace['n_rollouts']} run(s)): pots "
+                   f"{sim['p_pot']:.0%}, scratch {sim['p_scratch']:.0%}, foul {sim['p_foul']:.0%}. "
+                   "SA and MA never see these numbers.")
 
 
 def specialist_cards(d) -> None:
@@ -137,15 +115,13 @@ def specialist_cards(d) -> None:
             if "error" in r:
                 st.warning(r["error"])
                 continue
-            st.markdown(f"Top choice: **{r.get('top_choice')}**")
-            st.caption(r.get("summary", ""))
-            scores = r.get("scores") or {}
-            if scores:
-                st.dataframe(pd.DataFrame({"score": scores}).T, use_container_width=True)
-    dec_followed = d.trace.get("followed") or []
-    over = d.trace.get("overruled") or []
-    st.caption(f"Coordinator followed: {', '.join(dec_followed) or 'none'} · "
-               f"overruled: {', '.join(over) or 'none'}")
+            for rank, item in enumerate(r["shortlist"], 1):
+                st.markdown(f"{rank}. **{item['shot_id']}** — {item['reason']}")
+    if d.trace.get("unanimous"):
+        st.caption("All three ranked the same shot first, so no coordinator call was needed.")
+    else:
+        st.caption(f"Coordinator chose from {', '.join(d.trace.get('shortlisted', []))}; "
+                   f"followed: {', '.join(d.trace.get('followed') or []) or 'not stated'}.")
 
 
 def execute_panel(state: TableState, menu: list[Candidate], shot_id: str, noise: str, key: str) -> None:
@@ -165,69 +141,58 @@ def execute_panel(state: TableState, menu: list[Candidate], shot_id: str, noise:
 
 
 # ----------------------------------------------------------------------------- tabs
-def tab_decide(mode: str, access: str, noise: str) -> None:
+def tab_decide(mode: str, noise: str) -> None:
     positions = load_demo_positions()
     name = st.selectbox("Position", list(positions))
-    entry = positions[name]
-    state = TableState.model_validate(entry["state"])
+    state = TableState.model_validate(positions[name])
     problems = validate(state)
     if problems:
         st.error("Invalid position: " + "; ".join(problems))
         return
-    if "record" in entry:
-        state, menu = menu_at_level(entry["record"], access)
-    else:
-        with st.spinner("Generating and simulating candidate shots..."):
-            menu = [Candidate.model_validate(c) for c in menu_for(state.model_dump_json(), access, noise)]
-    key = f"{name}|{access}|{mode}"
+    with st.spinner("Generating candidate shots..."):
+        menu = [Candidate.model_validate(c) for c in menu_for(state.model_dump_json(), name)]
+    key = f"{name}|{mode}|{noise}"
     res = st.session_state.get("decisions", {}).get(key)
 
     left, right = st.columns([1, 1.25])
     with left:
         hi = None
         if res:
-            hi = res[1].shot_id if res[1] is not None else res[0].shot_id
+            hi = next((d.shot_id for d in (res[2], res[1], res[0]) if d is not None), None)
         st.plotly_chart(table_figure(state, menu, highlight=hi, title=name), use_container_width=False)
     with right:
-        st.markdown("**Candidate shots** (generated and simulated by code; the agents only choose)")
-        st.dataframe(pd.DataFrame([{"id": c.shot_id, "shot": c.description} for c in menu]),
+        st.markdown("**Candidate shots** (geometry only; the list order is random and means nothing)")
+        st.dataframe(pd.DataFrame([{"id": c.shot_id, "shot": c.description}
+                                   for c in sorted(menu, key=lambda c: c.shot_id)]),
                      hide_index=True, use_container_width=True, height=330)
-        if st.button("Run single agent and multi-agent", type="primary"):
-            sa, ma = get_policies(mode)
-            ctx = DecisionContext(state=state, candidates=menu)
+        if st.button("Run B, single agent and multi-agent", type="primary"):
+            ctx = DecisionContext(state=state, candidates=menu, noise=noise, sim_key=("demo", name))
             out = []
-            for label, pol in (("Single agent", sa), ("Multi-agent", ma)):
+            for label, pol in zip(("B", "Single agent", "Multi-agent"), get_policies(mode)):
                 with st.spinner(f"{label} is deciding..."):
-                    t0 = time.perf_counter()
                     try:
                         out.append(pol.decide(ctx))
                     except Exception as exc:  # noqa: BLE001 - show, never crash the demo
                         st.error(f"{label} failed: {type(exc).__name__}: {exc}")
                         out.append(None)
-                    st.session_state.setdefault("timings", []).append(time.perf_counter() - t0)
             st.session_state.setdefault("decisions", {})[key] = tuple(out)
             st.rerun()
 
     if res:
-        a, b = st.columns(2)
+        a, b, c = st.columns(3)
         with a:
-            decision_card("Single agent", res[0], menu)
+            decision_card("B (simulates every shot)", res[0], menu)
+            if res[0] is not None:
+                b_details(res[0])
         with b:
-            decision_card("Multi-agent (coordinator)", res[1], menu)
-            if res[1] is not None:
-                specialist_cards(res[1])
-        if "record" in entry:
-            with st.expander("Ground truth (oracle expected inning value)"):
-                rec = entry["record"]
-                rows = [{"id": k, "EIV": v["eiv"], "±SE": v["se"]} for k, v in rec["oracle"].items()]
-                st.dataframe(pd.DataFrame(rows).sort_values("EIV", ascending=False), hide_index=True)
-                for label, d in (("Single agent", res[0]), ("Multi-agent", res[1])):
-                    if d is not None:
-                        s = score_choice(rec, d.shot_id)
-                        st.write(f"{label}: regret {s['regret']:.2f} (0 = best shot)")
-        choices = [d.shot_id for d in res if d is not None]
+            decision_card("Single agent", res[1], menu)
+        with c:
+            decision_card("Multi-agent", res[2], menu)
+        if res[2] is not None:
+            specialist_cards(res[2])
+        choices = sorted({d.shot_id for d in res if d is not None})
         if choices:
-            pick = st.radio("Execute which choice?", sorted(set(choices)), horizontal=True)
+            pick = st.radio("Execute which choice?", choices, horizontal=True)
             if st.button("Execute shot"):
                 execute_panel(state, menu, pick, noise, key)
 
@@ -261,7 +226,7 @@ def tab_replay() -> None:
                         use_container_width=False)
     with right:
         if r["kind"] == "break":
-            st.markdown("**Break shot** (shared, seeded, not chosen by any agent)")
+            st.markdown("**Break shot** (shared and seeded; not chosen by any player)")
         else:
             d = r["decision"]
             st.markdown(f"**{r['system']} chose {d['shot_id']}** ({d['intent']})"
@@ -270,9 +235,9 @@ def tab_replay() -> None:
             if ch:
                 st.caption(ch.description)
             st.write(d.get("rationale", ""))
-            reports = (r.get("trace") or {}).get("reports") or {}
-            for name, rep in reports.items():
-                st.markdown(f"- *{name}*: top {rep.get('top_choice')} — {rep.get('summary', rep.get('error', ''))}")
+            for name, rep in ((r.get("trace") or {}).get("reports") or {}).items():
+                picks = ", ".join(f"{x['shot_id']} ({x['reason']})" for x in rep.get("shortlist", []))
+                st.markdown(f"- *{name}*: {picks or rep.get('error', '')}")
         res = ("FOUL: " + o["foul"]) if o.get("foul") else (
             "potted " + ", ".join(o["potted"]) if o.get("potted") else "nothing potted")
         st.markdown(f"**Result:** {res}" + (" · game over, winner " + str(o['winner']) if o.get("game_over") else ""))
@@ -283,34 +248,28 @@ def tab_replay() -> None:
 
 
 def tab_results() -> None:
-    found = False
-    for p in sorted(glob.glob(str(ROOT / "results" / "*" / "summary.csv"))):
-        found = True
-        st.markdown(f"**{Path(p).parent.name}**")
-        st.dataframe(pd.read_csv(p), use_container_width=True, hide_index=True)
+    summary = ROOT / "results" / "summary.md"
+    if summary.exists():
+        st.markdown(summary.read_text(encoding="utf-8"))
     for p in sorted(glob.glob(str(ROOT / "results" / "figures" / "*.png"))):
-        found = True
         st.image(p, caption=Path(p).stem)
-    if not found:
-        st.info("No results yet. Run the experiments (see README).")
+    if not summary.exists():
+        st.info("No results yet. Run the experiments, then `python experiments/analyze.py`.")
 
 
 def main() -> None:
     _warm()
-    st.title("CueMind: do specialised LLM agents choose better pool shots than one LLM?")
-    st.caption("Code generates and simulates candidate shots; the LLM systems only choose among them.")
+    st.title("CueMind: does a team of LLM agents play better pool than one LLM?")
+    st.caption("Code lists the candidate shots from geometry; B simulates them privately; the LLM "
+               "systems judge from the geometry alone.")
     with st.sidebar:
-        mode = st.radio("LLM mode", ["Offline (fake LLM)", "Local model (Ollama)", "Claude (Vertex)"])
-        access = st.selectbox("Information given to the agents", ["L2", "L1", "L0"],
-                              help="L0 geometry only · L1 one perfect-stroke preview · L2 statistics over realistic strokes")
-        noise = st.selectbox("Execution noise", ["medium", "low", "high", "none"])
-        if mode == "Local model (Ollama)":
+        mode = st.radio("LLM mode", MODES)
+        noise = st.selectbox("Execution noise", ["none", "low", "medium"])
+        if mode == MODES[1]:
             st.caption("Requires `ollama serve` and the model pulled; responses are cached.")
-        elif mode == "Claude (Vertex)":
-            st.caption("Uses Vertex AI credentials from .env; responses are cached.")
     t1, t2, t3 = st.tabs(["Decide a shot", "Replay a game", "Results"])
     with t1:
-        tab_decide(mode, access, noise)
+        tab_decide(mode, noise)
     with t2:
         tab_replay()
     with t3:

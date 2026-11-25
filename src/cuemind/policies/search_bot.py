@@ -1,20 +1,25 @@
-"""B2: search bot. Uses the same annotated menu as the LLM systems and picks the candidate
-with the highest expected value under a transparent hand-written objective.
+"""B: the simulation-based reference player (D-029).
+
+B chooses from the same raw menu as the LLM systems, but before choosing it simulates every
+candidate privately with the game's execution noise (n runs; one run when there is no noise,
+because the result is then exact) and picks the highest expected value:
 
     EV = p_pot * (1 + W_NEXT * next_ease)
-         - W_SCRATCH * p_scratch - W_FOUL * p_foul
+         - W_SCRATCH * p_scratch - W_FOUL * (p_foul - p_scratch)
          - W_THREAT * (1 - p_keep_turn) * opp_threat
 
-Weights live in `SearchWeights` (tuned only on dev games, then frozen; see decisions.md).
-At L1 the preview is used as a single-sample estimate; at L0 it falls back to geometry.
+B therefore has more information than SA and MA. That is intended: it is the common
+yardstick every system plays against. The weights are the frozen D-011 weights.
 """
 
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from cuemind.candidates.model import Candidate
+from cuemind.candidates.annotate import rollouts
+from cuemind.candidates.model import Rollouts
 from cuemind.policies.base import Decision, DecisionContext, intent_of
+from cuemind.sim.noise import get_noise
 
 
 @dataclass(frozen=True)
@@ -25,30 +30,28 @@ class SearchWeights:
     threat: float = 0.6
 
 
-def expected_value(c: Candidate, w: SearchWeights) -> float:
-    if c.rollouts is not None:
-        r = c.rollouts
-        return (r.p_pot * (1 + w.next * r.next_ease) - w.scratch * r.p_scratch
-                - w.foul * (r.p_foul - r.p_scratch) - w.threat * (1 - r.p_keep_turn) * r.opp_threat)
-    if c.preview is not None:
-        p = c.preview
-        nxt = min(p.next_viable_pots, 5) / 5
-        return (1 + w.next * nxt if p.pots_called else 0.0) - (w.scratch if p.scratch else 0.0) \
-            - (w.foul if (p.foul and not p.scratch) else 0.0)
-    return c.geometry.ease if c.shot_type == "pot" else 0.0
+def expected_value(r: Rollouts, w: SearchWeights) -> float:
+    return (r.p_pot * (1 + w.next * r.next_ease) - w.scratch * r.p_scratch
+            - w.foul * (r.p_foul - r.p_scratch) - w.threat * (1 - r.p_keep_turn) * r.opp_threat)
 
 
 class SearchBot:
-    name = "B2_search"
+    name = "B_search"
 
-    def __init__(self, weights: SearchWeights | None = None):
+    def __init__(self, weights: SearchWeights | None = None, n_rollouts: int = 8):
         self.w = weights or SearchWeights()
+        self.n_rollouts = n_rollouts
 
     def decide(self, ctx: DecisionContext) -> Decision:
-        scored = sorted(((expected_value(c, self.w), c) for c in ctx.candidates),
+        n = 1 if get_noise(ctx.noise).is_zero else self.n_rollouts
+        sims = rollouts(ctx.state, ctx.candidates, n, ctx.noise, ctx.sim_key)
+        scored = sorted(((expected_value(c.rollouts, self.w), c) for c in sims),
                         key=lambda t: (-t[0], t[1].shot_id))
         ev, best = scored[0]
         return Decision(shot_id=best.shot_id, intent=intent_of(best),
-                        rationale=f"highest expected value ({ev:.3f})",
+                        rationale=f"highest expected value in private simulation ({ev:.3f})",
                         trace={"ev": {c.shot_id: round(v, 4) for v, c in scored},
-                               "weights": asdict(self.w)})
+                               "sim": {c.shot_id: c.rollouts.model_dump(
+                                   include={"p_pot", "p_scratch", "p_foul", "next_ease", "opp_threat"})
+                                   for _, c in scored},
+                               "n_rollouts": n, "weights": asdict(self.w)})

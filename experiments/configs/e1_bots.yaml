@@ -1,7 +1,0 @@
-# E1-bots: decision-level baselines (no LLM, no cost). Same frozen menus as E1/E4.
-exp_id: e1_bots
-positions: [data/positions/test.jsonl, data/positions/hard_cases.jsonl]
-systems: [b0, b1, b2]
-access_levels: [L0, L1, L2]
-repeats: 1
-threads: 4

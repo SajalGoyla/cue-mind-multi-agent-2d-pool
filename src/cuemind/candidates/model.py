@@ -26,19 +26,9 @@ class Geometry(BaseModel):
     ease: float = 0.0  # geometric ease in [0, 1], higher = easier
 
 
-class Preview(BaseModel):
-    """Access level L1: one noise-free simulation."""
-
-    pots_called: bool
-    scratch: bool
-    legal: bool
-    foul: str | None = None
-    cue_end: tuple[float, float] | None = None
-    next_viable_pots: int = 0
-
-
 class Rollouts(BaseModel):
-    """Access level L2: Monte-Carlo statistics over noisy executions."""
+    """Simulation statistics over executions of one candidate. Computed privately by the
+    reference bot B; never shown to the LLM systems (D-029)."""
 
     n: int
     p_pot: float              # called ball in called pocket, legal shot
@@ -64,7 +54,6 @@ class Candidate(BaseModel):
     b: float = 0.0
     theta: float = 0.0
     geometry: Geometry = Geometry()
-    preview: Preview | None = None
     rollouts: Rollouts | None = None
     description: str = ""
 
@@ -79,6 +68,6 @@ class Candidate(BaseModel):
 
 
 def candidates_hash(cands: list[Candidate]) -> str:
-    """Hash of the menu as an LLM system would see it (ids, shots and annotations)."""
+    """Hash of the menu (ids and shots); equal hashes mean every policy saw the same menu."""
     blob = json.dumps([c.model_dump(exclude={"description"}) for c in cands], sort_keys=True)
     return "sha256:" + hashlib.sha256(blob.encode()).hexdigest()[:16]

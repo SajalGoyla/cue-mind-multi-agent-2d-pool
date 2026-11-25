@@ -1,10 +1,10 @@
-"""Live check of the LLM setup (costs well under one US cent with Haiku 5.5).
+"""Live check of the local model setup (free; needs `ollama serve` and the model pulled).
 
     python scripts/check_llm.py            # one structured call, then one SA and one MA decision
     python scripts/check_llm.py --quick    # only the single structured call
 
-Reads .env (GOOGLE_APPLICATION_CREDENTIALS, GCP_PROJECT_ID, VERTEX_REGION, CUEMIND_MODEL).
-Responses are cached in CUEMIND_LLM_CACHE, so re-running is free.
+Uses CUEMIND_OLLAMA_MODEL (default qwen2.5:7b-instruct). Responses are cached in
+CUEMIND_LLM_CACHE (default results/cache/llm_cache.sqlite), so re-running is instant.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 
-from cuemind.candidates.pipeline import PrepConfig, prepare  # noqa: E402
+from cuemind.candidates.pipeline import build_menu  # noqa: E402
 from cuemind.llm.schemas import SingleDecision  # noqa: E402
 from cuemind.policies.base import DecisionContext  # noqa: E402
 from cuemind.policies.multi_agent import MultiAgent  # noqa: E402
@@ -35,10 +35,9 @@ DEMO = TableState(cue=(0.5, 0.6), balls={"1": (0.20, 1.70), "3": (0.75, 1.2), "4
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
-    ap.add_argument("--max-usd", type=float, default=0.25)
     a = ap.parse_args()
-    client = make_llm_client(run_id="check_llm", max_usd=a.max_usd)
-    print(f"model={client.model} effort={client.effort}")
+    client = make_llm_client(llm="ollama")
+    print(f"model={client.model} {client.effort} host={client.host}")
 
     r = client.complete(system="You answer with the requested JSON only.",
                         user="Candidates:\nS01 | easy pot\nS02 | hard pot\nPick the easier shot.",
@@ -51,15 +50,16 @@ def main() -> int:
     if a.quick:
         return 0
 
-    cands = prepare(DEMO, PrepConfig(access_level="L2", n_rollouts=8), rollout_key=(0,))
-    ctx = DecisionContext(state=DEMO, candidates=cands)
+    menu = build_menu(DEMO, menu_key=(0,))
+    ctx = DecisionContext(state=DEMO, candidates=menu)
     for policy in (SingleAgent(client), MultiAgent(client)):
         d = policy.decide(ctx)
         print(f"\n{policy.name}: {d.shot_id} intent={d.intent} fallback={d.fallback} "
-              f"conf={d.confidence} usage={json.dumps(d.usage)}")
+              f"usage={json.dumps(d.usage)}")
         print("  rationale:", d.rationale)
         for name, rep in (d.trace.get("reports") or {}).items():
-            print(f"  [{name}] top={rep.get('top_choice')} :: {rep.get('summary') or rep.get('error')}")
+            picks = [i["shot_id"] for i in rep.get("shortlist", [])]
+            print(f"  [{name}] shortlist={picks or rep.get('error')}")
     return 0
 
 

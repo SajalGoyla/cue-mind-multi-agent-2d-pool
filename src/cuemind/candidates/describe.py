@@ -1,9 +1,9 @@
 """Plain-language rendering of positions and candidates for LLM prompts and the UI.
 
-LLMs reason poorly over raw coordinates, so positions are given in *diamonds* (the sights
-on the rails: 4 across the short rail, 8 along the long rail) plus named zones, and every
-candidate gets a one-line description built only from the information allowed at the
-current access level (L0 geometry, L1 + preview, L2 + rollout statistics).
+Positions are given in *diamonds* (the sights on the rails: 4 across the short rail, 8 along
+the long rail) plus named zones. Every candidate gets a one-line description built only from
+its geometry: ball, pocket, speed, spin, cut angle and a difficulty word. No simulated outcome
+is ever shown (v2, D-029).
 """
 
 from __future__ import annotations
@@ -54,39 +54,18 @@ def ease_word(e: float) -> str:
     return "none"
 
 
-def describe(c: Candidate, access_level: str) -> str:
+def describe(c: Candidate) -> str:
     if c.shot_type == "pot":
-        head = (f"Pot {c.target_ball} into the {POCKET_LABEL[c.pocket]}, {c.power_label} speed, "
-                f"{c.spin_label}; cut {c.geometry.cut_deg:.0f} deg, {ease_word(c.geometry.ease)} geometry")
-    elif c.shot_type == "safety":
-        head = (f"Safety: play {c.power_label} into ball {c.target_ball} "
-                f"(cut {c.geometry.cut_deg:.0f} deg), nothing called")
-    else:
-        head = f"Contact only: hit ball {c.target_ball} full at medium speed (last resort)"
-    parts = [head]
-    if access_level in ("L1", "L2") and c.preview is not None and c.rollouts is None:
-        p = c.preview
-        res = "pots it" if p.pots_called else ("FOUL: " + p.foul if p.foul else "no pot")
-        parts.append(f"preview (perfect stroke): {res}; cue ends {where(p.cue_end)}; "
-                     f"{p.next_viable_pots} pots available next")
-    if access_level == "L2" and c.rollouts is not None:
-        r = c.rollouts
-        if c.shot_type == "pot":
-            parts.append(
-                f"over {r.n} realistic strokes: pots {r.p_pot:.0%}, scratch {r.p_scratch:.0%}, "
-                f"foul {r.p_foul:.0%}; cue ends {where(r.cue_end_mean)}; "
-                f"next shot if I continue: {ease_word(r.next_ease)} ({r.next_ease:.2f}); "
-                f"opponent's chance if turn passes: {ease_word(r.opp_threat)} ({r.opp_threat:.2f})")
-        else:
-            parts.append(
-                f"over {r.n} realistic strokes: foul {r.p_foul:.0%} (scratch {r.p_scratch:.0%}); "
-                f"cue ends {where(r.cue_end_mean)}; opponent's best shot afterwards: "
-                f"{ease_word(r.opp_threat)} ({r.opp_threat:.2f})")
-    return ". ".join(parts) + "."
+        return (f"Pot {c.target_ball} into the {POCKET_LABEL[c.pocket]}, {c.power_label} speed, "
+                f"{c.spin_label}; cut {c.geometry.cut_deg:.0f} deg, {ease_word(c.geometry.ease)} geometry.")
+    if c.shot_type == "safety":
+        return (f"Safety: play {c.power_label} into ball {c.target_ball} "
+                f"(cut {c.geometry.cut_deg:.0f} deg), nothing called.")
+    return f"Contact only: hit ball {c.target_ball} full at medium speed (last resort)."
 
 
-def describe_all(state: TableState, cands: list[Candidate], access_level: str) -> list[Candidate]:
-    return [c.model_copy(update={"description": describe(c, access_level)}) for c in cands]
+def describe_all(cands: list[Candidate]) -> list[Candidate]:
+    return [c.model_copy(update={"description": describe(c)}) for c in cands]
 
 
 def state_summary(state: TableState) -> str:
@@ -101,8 +80,9 @@ def state_summary(state: TableState) -> str:
         lines.append(f"You play {g[me]}; the opponent plays {g[opp]}.")
     mine, theirs = state.remaining(me), state.remaining(opp)
     if state.on_the_eight(me):
-        lines.append("You are ON THE 8: pocket the 8 in the called pocket to win; any foul or "
-                     "wrong pocket on the 8 loses.")
+        lines.append("You are ON THE 8: pocket the 8 in the called pocket to win. Pocketing the 8 in "
+                     "another pocket, or together with a foul, loses; any other foul gives the "
+                     "opponent ball in hand.")
     else:
         lines.append(f"Your balls left ({len(mine)}): {', '.join(mine) or 'none'}.")
     if g[opp] != "open":

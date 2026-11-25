@@ -39,27 +39,3 @@ def sign_test(diffs: Sequence[float]) -> float:
     if pos + neg == 0:
         return 1.0
     return float(sps.binomtest(pos, pos + neg, 0.5).pvalue)
-
-
-def wilcoxon_paired(a: Sequence[float], b: Sequence[float]) -> tuple[float, float]:
-    """(p-value, rank-biserial effect size) for paired samples a vs b (zeros dropped)."""
-    d = np.asarray(a, float) - np.asarray(b, float)
-    d = d[d != 0]
-    if d.size == 0:
-        return 1.0, 0.0
-    res = sps.wilcoxon(d)
-    ranks = sps.rankdata(np.abs(d))
-    r_plus, r_minus = ranks[d > 0].sum(), ranks[d < 0].sum()
-    return float(res.pvalue), float((r_plus - r_minus) / ranks.sum())
-
-
-def holm(pvalues: Sequence[float]) -> list[float]:
-    """Holm–Bonferroni adjusted p-values (same order as the input)."""
-    m = len(pvalues)
-    order = sorted(range(m), key=lambda i: pvalues[i])
-    adj = [0.0] * m
-    running = 0.0
-    for rank, i in enumerate(order):
-        running = max(running, min(1.0, (m - rank) * pvalues[i]))
-        adj[i] = running
-    return adj

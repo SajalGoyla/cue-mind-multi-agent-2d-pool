@@ -11,5 +11,6 @@ The grading rubric checks whether important feedback from the October TA discuss
 Changes relative to the October 26 proposal that the report should mention:
 
 - Rules: our own simplified called-shot 8-ball layer instead of pooltool's ruleset (D-002).
-- Model: Claude Haiku 5.5 for bulk experiments and Sonnet 5.5 for confirmation, both via Vertex AI, instead of an open-weight model (plan decision D1/D3); the open-weight model remains optional future work.
-- Banks and kicks are not in the candidate generator (D-006, D-022).
+- Model: a local open-weight model (Qwen 2.5 7B Instruct via Ollama) for all LLM experiments, because Claude on Vertex AI never received quota (D-025). Fine-tuning becomes possible with a local model.
+- Evaluation (v2, D-029): full games against a common simulation-based reference player (B vs B, B vs SA, B vs MA) instead of a decision-level benchmark with a simulated oracle, which turned out to be circular. The LLM systems see raw geometric candidates only.
+- Banks and kicks are not in the candidate generator (D-006).

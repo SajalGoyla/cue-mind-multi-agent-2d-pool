@@ -1,0 +1,15 @@
+# Main experiment (D-029): B vs B, B vs SA, B vs MA on the same seeds, both seat orders,
+# common random numbers. Run only after prompts are frozen (tag prompts-v2).
+# Resolution: a 95% interval is about +-13 points at 60 games and +-10 at 100.
+exp_id: main
+pairings:
+  - [b, b]
+  - [b, sa]
+  - [b, ma]
+seeds: {start: 3000, count: 30}
+noise_levels: [none]       # chosen by pilot_bots (2026-11-25); switch to [low] if dev shows a floor effect
+max_shots: 150
+workers: 2                 # LLM games share one local model server
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}

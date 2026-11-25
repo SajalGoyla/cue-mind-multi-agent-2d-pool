@@ -1,7 +1,7 @@
-"""Play a full game between two policies, logging every decision as one JSON record.
+"""Play a full game between two policies, logging every shot as one JSON record.
 
-Usage (baseline sanity check):
-    python -m cuemind.game.runner --p1 b1 --p2 b0 --games 2 --noise medium
+Usage (bot sanity check):
+    python -m cuemind.game.runner --p1 b --p2 b1 --games 2 --noise none --log results/raw/x.jsonl
 """
 
 from __future__ import annotations
@@ -16,11 +16,10 @@ from pathlib import Path
 from typing import Any
 
 from cuemind.candidates.model import candidates_hash
-from cuemind.candidates.pipeline import PrepConfig, prepare
+from cuemind.candidates.pipeline import MenuConfig, build_menu
 from cuemind.game.ball_in_hand import resolve_ball_in_hand
 from cuemind.game.break_shot import break_stroke
 from cuemind.game.rules import Call, advance, judge
-from cuemind.llm.cache import BudgetExceeded
 from cuemind.policies.base import Decision, DecisionContext, Policy, fallback_choice
 from cuemind.sim.execute import extract_events, simulate, warm_up
 from cuemind.sim.noise import get_noise, rng_for
@@ -65,8 +64,6 @@ def _decide_safely(policy: Policy, ctx: DecisionContext) -> Decision:
             return d
         err = f"unknown shot_id {d.shot_id!r}"
         trace, usage = d.trace, d.usage
-    except BudgetExceeded:
-        raise  # stop the game; the run resumes later from the response cache
     except Exception as exc:  # noqa: BLE001
         err = f"{type(exc).__name__}: {exc}"
         trace, usage = {"traceback": traceback.format_exc(limit=3)}, {}
@@ -76,15 +73,16 @@ def _decide_safely(policy: Policy, ctx: DecisionContext) -> Decision:
                     trace={**trace, "fallback_reason": err}, usage=usage)
 
 
-def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
-              prep: PrepConfig | None = None, start_state: TableState | None = None,
+def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "none",
+              menu: MenuConfig | None = None, start_state: TableState | None = None,
               max_shots: int = 150, game_id: str | None = None,
               log_path: Path | None = None, exp_id: str = "adhoc") -> GameResult:
     """Play one game. `policies` maps seat ("P1", "P2") to a Policy. P1 breaks unless a
-    start_state is given. Execution noise uses common random numbers keyed by
-    (seed, shot index), so paired games with swapped seats share the same noise draws."""
+    start_state is given. Every policy gets the same raw menu for a given state. Execution
+    noise uses common random numbers keyed by (seed, shot index), so paired games with swapped
+    seats share the same noise draws."""
     warm_up()
-    prep = prep or PrepConfig(noise=noise)
+    menu = menu or MenuConfig()
     noise_model = get_noise(noise)
     game_id = game_id or f"{exp_id}_seed{seed}"
     state = start_state if start_state is not None else rack_state(seed)
@@ -109,11 +107,11 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
             else:
                 rec["ball_in_hand"] = state.ball_in_hand or state.cue is None
                 state = resolve_ball_in_hand(state)
-                cands = prepare(state, prep, rollout_key=(seed, k))
+                cands = build_menu(state, menu, menu_key=(seed, k))
                 ctx = DecisionContext(state=state, candidates=cands, history=history[-HISTORY_LEN:],
                                       game_id=game_id, rng=rng_for(seed, k, "policy", seat),
                                       ball_in_hand=rec["ball_in_hand"],
-                                      request_tag=f"{game_id}:{k}")
+                                      request_tag=f"{game_id}:{k}", noise=noise, sim_key=(seed, k))
                 t_dec = time.perf_counter()
                 decision = _decide_safely(policies[seat], ctx)
                 decision_s = time.perf_counter() - t_dec
@@ -122,7 +120,7 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
                 executed = noise_model.apply(cand.stroke, rng_for(seed, k, "execute"))
                 rec.update(
                     kind="decision", state_hash=state_hash(state), state=state.model_dump(),
-                    prep=prep.to_dict(), candidates_hash=candidates_hash(cands),
+                    menu=menu.to_dict(), noise=noise, candidates_hash=candidates_hash(cands),
                     candidates=[c.model_dump() for c in cands],
                     decision={"shot_id": decision.shot_id, "intent": decision.intent,
                               "rationale": decision.rationale, "confidence": decision.confidence},
@@ -157,8 +155,6 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
                 status, winner = "finished", j.winner
                 break
             state = advance(state, j, cue_after, balls_after)
-    except BudgetExceeded:
-        raise
     except Exception as exc:  # noqa: BLE001 - record and surface, never hang a tournament
         status, error = "error", f"{type(exc).__name__}: {exc}\n{traceback.format_exc(limit=5)}"
 
@@ -171,18 +167,19 @@ def main() -> None:
     from cuemind.policies.registry import make_policy
 
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--p1", default="b1")
+    ap.add_argument("--p1", default="b")
     ap.add_argument("--p2", default="b1")
     ap.add_argument("--games", type=int, default=1)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--noise", default="medium")
-    ap.add_argument("--access", default="L2")
+    ap.add_argument("--noise", default="none")
+    ap.add_argument("--llm", default=None, help="ollama | fake (for sa / ma)")
     ap.add_argument("--log", default=None, help="JSONL path for per-shot records")
     a = ap.parse_args()
-    prep = PrepConfig(access_level=a.access, noise=a.noise)
+    kw = {"llm": a.llm} if a.llm else {}
     for g in range(a.games):
-        res = play_game({"P1": make_policy(a.p1), "P2": make_policy(a.p2)}, seed=a.seed + g,
-                        noise=a.noise, prep=prep, log_path=Path(a.log) if a.log else None)
+        res = play_game({"P1": make_policy(a.p1, **kw), "P2": make_policy(a.p2, **kw)},
+                        seed=a.seed + g, noise=a.noise,
+                        log_path=Path(a.log) if a.log else None)
         print(json.dumps(res.summary()))
 
 

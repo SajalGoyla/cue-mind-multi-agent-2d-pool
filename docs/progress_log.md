@@ -205,3 +205,27 @@ $env:OLLAMA_NUM_PARALLEL="2"; Start-Process ollama -ArgumentList serve -WindowSt
 Estimated ~8.5 hours on the RTX 4060 laptop; keep the machine awake (Windows power settings) while it runs.
 
 **Team to-dos:** categorise failure cases (`docs/failure_analysis_e1.md`), review hard-case labels (`data/positions/hard_cases/`, set `reviewed_by`), add TA feedback (`docs/ta_feedback.md`), slides from `docs/presentation_outline.md`, report from `docs/report_draft_method.md` + `docs/report_draft_results.md`.
+
+## 2026-11-25: v2 on branch `ali-experiment` (decision D-029)
+
+**Why.** Team review found the v1 positions benchmark circular (simulated statistics in, simulated oracle out; evidence in D-029) and the project overgrown. v2 keeps three systems (B, SA, MA) and evaluates them only by full games against the same reference player B.
+
+**Done**
+- Raw menus for every policy (`candidates/pipeline.py`): 4 easiest target/pocket pairs × medium × draw/stun/follow + ≤ 3 safeties, seeded shuffle, geometry-only descriptions. Prompts rewritten for raw menus (cut angle, speed and spin explained); the "foul on the 8 loses" text fixed to match the rules.
+- B simulates every candidate privately with the game's noise (1 run without noise, 8 with) and keeps the D-011 objective.
+- MA v2: three specialists return ranked shortlists (≤ 3 ids with reasons) in parallel; the coordinator chooses among the shortlisted shots only; unanimous first choices skip the coordinator.
+- Removed: positions benchmark, oracle, hard cases, access levels, B0, SA-vote, critic, ablations, Claude/Vertex client and budget, the queue runner, all v1 configs, data and results (v1 remains on `main` at `6c96b93`).
+- New configs `pilot_bots.yaml`, `dev.yaml`, `main.yaml`; `analyze.py` rewritten (head-to-head tables, how games ended, SA vs MA through the common opponent B); demo rewritten for B / SA / MA; one demo game in `demo/games/`.
+
+**Tested.** `pytest -q`: 55 tests pass (macOS, Python 3.12, panda3d 1.10.16). Live check with a local `llama3.1` (qwen2.5 not pulled on this machine): SA and MA decisions parse and validate; MA used 5 calls (one corrective retry).
+
+**Pilot (bots only, 30 seeds; `results/pilot_bots/`, `results/summary.md`).**
+- Noise `none`: B beats B1 90 % [80, 95] of 60 games (paired seed score +0.80, sign test p = 1e-7). B pots 99.5 % of attempts, 3.0 balls per inning; games last 13.7 shots.
+- Noise `low`: B beats B1 62 % [49, 73] (p = 0.19, not significant).
+- B vs B: breaker wins 53 % at both levels; no game reached the shot cap.
+- **Chosen: noise `none`** (dev.yaml, main.yaml).
+
+**Next**
+1. On the GPU machine: `ollama pull qwen2.5:7b-instruct`, then `experiments/configs/dev.yaml` (B vs SA, B vs MA, 5 seeds). Floor check: if SA wins < 10 % against B, switch to `low` noise and rerun the dev step.
+2. Read the dev traces, adjust prompts at most twice, `git tag prompts-v2`.
+3. `main.yaml` (30 seeds), `analyze.py`, copy two real games into `demo/games/`.

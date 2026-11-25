@@ -1,13 +1,14 @@
 # Final report outline (due Dec 15, ACM Master Article template)
 
-Write the report from these sources: `docs/architecture.md` (method), `docs/decisions.md` (design choices and their reasons), `docs/progress_log.md` (what happened, issues found), `data/README.md` (benchmark), `results/summary.md` (every number), `results/figures/` (every figure), `docs/ta_feedback.md` (response to feedback).
+Write the report from these sources: `docs/architecture.md` (method), `docs/decisions.md` (design choices and their reasons; D-029 for v2), `docs/progress_log.md` (what happened), `results/summary.md` (every number), `results/figures/` (every figure), `docs/ta_feedback.md` (response to feedback).
 
 1. **Abstract.**
-2. **Introduction.** Problem, why sequential decisions with consequences matter for agent systems, RQ1–RQ3, contributions (bulleted), headline finding with uncertainty.
-3. **Related work** (compare critically, say how each informed our design): computational pool (Archibald et al.), pooltool; LLMs in pool (PoolBench: numeric outputs fail → we choose by id; CueTip: LLM explains a neural policy → we let the LLM choose among simulated options); multi-agent LLM collaboration and its critiques (Smit et al.: strong single-agent baselines → our fairness contract and SA-vote); tool-augmented agents.
-4. **Method.** Environment and rules (D-002); candidate generation (D-006) and access levels (D-010); systems B0–B2 (D-011), SA, SA-vote, MA, critic (D-016, D-017); prompts (appendix); fairness contract.
-5. **Benchmark and setup.** Positions (D-019, `data/README.md`), oracle definition and its limits; hard cases (D-022, human-reviewed labels); tournaments (D-018) with common random numbers (D-004); noise model and calibration (E0, E0b); models, versions, effort, prices, hardware; prompt-iteration procedure on the dev split only.
-6. **Results.** E1 (RQ1); situation breakdown, cost, SA-vote, E6 ablations (RQ2); E4 and noise (RQ3); E2 games; E10 variance; E8 model confirmation.
-7. **Analysis.** Failure categories with examples (`docs/failure_analysis.md`); why results occurred; when a single agent is preferable.
-8. **Limitations.** Simulated noise is not human play; luck-dominated games at medium noise (E0); one model family; oracle is a short-horizon approximation; no kicks/banks; no user study (scenario-based evaluation only).
-9. **Future work** (plan §17, prioritised by findings). 10. **Conclusion.** References. Appendix: prompts (`src/cuemind/llm/prompts/`), schemas, extra tables, response to TA feedback.
+2. **Introduction.** Problem, why sequential decisions with consequences matter for agent systems, research question (does a team of specialised LLM agents play better than one LLM, against the same reference player?), contributions, headline finding with uncertainty.
+3. **Related work** (compare critically, say how each informed our design): computational pool (Archibald et al.), pooltool; LLMs in pool (PoolBench: numeric outputs fail → the LLM chooses among candidates by id; CueTip: a neural policy chooses and the LLM explains → here the LLM chooses); multi-agent LLM collaboration and its critiques (Smit et al.: strong single-agent baselines → matched knowledge and a common opponent); tool-augmented agents.
+4. **Method.** Environment and rules (D-002); raw candidate menu (D-029); B (simulation-based reference, D-011); SA; MA v2 with shortlists (D-029); prompts (appendix); fairness contract.
+5. **Setup.** Game protocol (paired seeds, both seat orders, common random numbers, D-004, D-018); noise pilot and the chosen level; prompt development on dev seeds only, then frozen; model, temperature, hardware.
+6. **Results.** Win rate against B for SA and MA with CIs; SA vs MA seed by seed; how games ended; pot success, balls per inning, fouls; calls, tokens and latency.
+7. **Analysis.** Annotated moments from real game logs (where the team helped, where it hurt); when a single agent is preferable.
+8. **Why v1 was dropped (one paragraph).** The positions benchmark showed the LLMs simulated statistics and graded with a simulated oracle built from the same simulator and similar terms; evidence in D-029.
+9. **Limitations.** Simulated play only; one small open model; menus limited to direct pots and simple safeties (no kicks/banks); limited number of games; no user study.
+10. **Future work.** Fine-tuning (imitating B's choices) for both SA and MA; stronger models; richer menus. **Conclusion.** References. Appendix: prompts (`src/cuemind/llm/prompts/`), schemas, extra tables, response to TA feedback.

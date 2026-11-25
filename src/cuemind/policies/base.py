@@ -1,4 +1,4 @@
-"""Policy interface: every decision maker (baseline bot or LLM system) implements this."""
+"""Policy interface: every decision maker (bot or LLM system) implements this."""
 
 from __future__ import annotations
 
@@ -16,13 +16,15 @@ Intent = Literal["offense", "position", "safety"]
 @dataclass
 class DecisionContext:
     state: TableState
-    candidates: list[Candidate]
+    candidates: list[Candidate]                         # the raw menu (identical for every policy)
     history: list[dict] = field(default_factory=list)  # last few shots, most recent last
     game_id: str = ""
     rng: np.random.Generator = field(default_factory=lambda: np.random.default_rng(0))
     ball_in_hand: bool = False  # the cue ball was just placed after an opponent's foul
     request_tag: str = ""       # stable id of this decision (logging only)
-    sample_idx: int = 0         # >0 draws an independent LLM sample (decision-variance runs)
+    sample_idx: int = 0         # >0 draws an independent LLM sample
+    noise: str = "none"         # execution noise of this game (B simulates with it)
+    sim_key: tuple = ()         # seeds B's private simulations (game seed, shot index)
 
     def by_id(self, shot_id: str) -> Candidate | None:
         return next((c for c in self.candidates if c.shot_id == shot_id), None)
@@ -36,9 +38,9 @@ class Decision:
     confidence: float | None = None
     fallback: bool = False
     # Everything needed to explain the decision afterwards: per-agent prompts/outputs,
-    # tokens, latency. Baselines put their scores here.
+    # tokens, latency. B puts its private simulation scores here.
     trace: dict[str, Any] = field(default_factory=dict)
-    usage: dict[str, float] = field(default_factory=dict)  # calls, tokens, cost_usd, latency_s
+    usage: dict[str, float] = field(default_factory=dict)  # calls, tokens, latency_s
 
 
 class Policy(Protocol):
@@ -48,12 +50,9 @@ class Policy(Protocol):
 
 
 def fallback_choice(cands: list[Candidate]) -> Candidate:
-    """The shared fallback rule (fairness contract): highest p_pot when simulation stats are
-    available, otherwise highest geometric ease; pots before safeties; then lowest id."""
-    def key(c: Candidate):
-        p = c.rollouts.p_pot if c.rollouts else (1.0 if c.preview and c.preview.pots_called else 0.0)
-        return (c.shot_type != "pot", -p, -c.geometry.ease, c.shot_id)
-    return min(cands, key=key)
+    """The shared fallback rule: pots before safeties, then the highest geometric ease,
+    then the lowest id. Uses only what every policy can see."""
+    return min(cands, key=lambda c: (c.shot_type != "pot", -c.geometry.ease, c.shot_id))
 
 
 def intent_of(c: Candidate) -> Intent:

@@ -2,29 +2,34 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import BaseModel
 
 from cuemind.llm.client import LLMClient, LLMResult
 
-USAGE_FIELDS = ("input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens",
-                "cost_usd")
+USAGE_FIELDS = ("input_tokens", "output_tokens")
+
+
+def single_id(parsed: BaseModel) -> list[str]:
+    return [parsed.shot_id]
 
 
 def call_with_id_check(client: LLMClient, *, system: str, user: str, schema: type[BaseModel],
                        agent: str, valid_ids: set[str], repeat_idx: int = 0,
-                       id_field: str = "shot_id") -> tuple[LLMResult, list[dict]]:
-    """Call the model; if the returned id is not in the menu (or nothing parsed), retry once
-    with a short corrective note. Returns the final result and a log of every attempt."""
+                       ids_of: Callable[[BaseModel], list[str]] = single_id
+                       ) -> tuple[LLMResult, list[dict]]:
+    """Call the model; if the answer contains no valid id (or nothing parsed), retry once with
+    a short corrective note. Returns the final result and a log of every attempt."""
     attempts: list[dict] = []
     res = client.complete(system=system, user=user, schema=schema, agent=agent,
                           repeat_idx=repeat_idx)
     attempts.append({"agent": agent, "attempt": 0, **res.log()})
-    if _valid(res, valid_ids, id_field):
+    if _valid(res, valid_ids, ids_of):
         return res, attempts
-    got = getattr(res.parsed, id_field, None) if res.parsed is not None else None
-    note = (f"\n\nYour previous answer used the id {got!r}, which is not in the list. "
+    got = ids_of(res.parsed) if res.parsed is not None else None
+    note = (f"\n\nYour previous answer used {got!r}, which is not in the list. "
             if got is not None else "\n\nYour previous answer could not be read. ")
     note += f"Valid ids are: {', '.join(sorted(valid_ids))}. Answer again."
     res2 = client.complete(system=system, user=user + note, schema=schema, agent=agent,
@@ -33,8 +38,8 @@ def call_with_id_check(client: LLMClient, *, system: str, user: str, schema: typ
     return res2, attempts
 
 
-def _valid(res: LLMResult, valid_ids: set[str], id_field: str) -> bool:
-    return res.parsed is not None and getattr(res.parsed, id_field, None) in valid_ids
+def _valid(res: LLMResult, valid_ids: set[str], ids_of) -> bool:
+    return res.parsed is not None and any(i in valid_ids for i in ids_of(res.parsed))
 
 
 def sum_usage(attempts: list[dict], wall_s: float) -> dict[str, Any]:

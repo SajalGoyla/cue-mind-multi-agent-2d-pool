@@ -1,5 +1,5 @@
 {
-  "_note": "Demo positions. S1-S3 are hand-made illustrations; replace or extend with positions mined from real experiment logs before the presentation (plan section 13.2).",
+  "_note": "Demo positions for the 'Decide a shot' tab. These are hand-made illustrations; positions from real game logs can be added in the same format.",
   "positions": [
     {
       "name": "S1 Easy pot (both systems should agree)",

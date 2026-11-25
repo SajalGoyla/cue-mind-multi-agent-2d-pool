@@ -1,4 +1,4 @@
-"""Demo smoke test: the app loads, renders a position, and runs both systems offline."""
+"""Demo smoke test: the app loads, renders a position, and runs B, SA and MA offline."""
 
 from pathlib import Path
 
@@ -14,7 +14,7 @@ def test_demo_app_runs_offline():
     at.run()
     assert not at.exception, at.exception
     assert at.radio[0].value == "Offline (fake LLM)"
-    run = next(b for b in at.button if "Run single agent" in b.label)
+    run = next(b for b in at.button if "Run B" in b.label)
     run.click().run()
     assert not at.exception, at.exception
     text = " ".join(m.value for m in at.markdown)
