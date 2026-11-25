@@ -1,12 +1,13 @@
-"""B2: search bot. Uses the same annotated menu as the LLM systems and picks the candidate
-with the highest expected value under a transparent hand-written objective.
+"""Stat: the simulation-based reference player (v1 name: B2). It chooses from the same menu
+as the LLM systems but uses the menu's attached forecasts (3 noisy simulations per variant,
+averaged) and picks the candidate with the highest expected value under a transparent,
+hand-written objective. It therefore has more information than the LLMs (D-029).
 
     EV = p_pot * (1 + W_NEXT * next_ease)
          - W_SCRATCH * p_scratch - W_FOUL * p_foul
          - W_THREAT * (1 - p_keep_turn) * opp_threat
 
-Weights live in `SearchWeights` (tuned only on dev games, then frozen; see decisions.md).
-At L1 the preview is used as a single-sample estimate; at L0 it falls back to geometry.
+Weights live in `SearchWeights` (D-011, unchanged in v2).
 """
 
 from __future__ import annotations
@@ -39,7 +40,7 @@ def expected_value(c: Candidate, w: SearchWeights) -> float:
 
 
 class SearchBot:
-    name = "B2_search"
+    name = "Stat"
 
     def __init__(self, weights: SearchWeights | None = None):
         self.w = weights or SearchWeights()

@@ -1,6 +1,0 @@
-round,prompt_version,system,n,mean_regret,top1,safety_rate,fallback_rate,mean_latency_s,change
-0,-,b2,60,0.359,0.467,0.133,0.0,0.0,initial prompts
-0,116380aaf083,sa,60,0.412,0.45,0.333,0.0,14.0,initial prompts
-0,116380aaf083,ma,60,0.423,0.467,0.317,0.0,42.8,initial prompts
-1,070cfbefbf9d,sa,60,0.38,0.45,0.2,0.0,13.8,shared rule: pot probability first; specialist top = highest score; coordinator must not default to one specialist
-1,070cfbefbf9d,ma,60,0.351,0.467,0.117,0.0,41.2,shared rule: pot probability first; specialist top = highest score; coordinator must not default to one specialist

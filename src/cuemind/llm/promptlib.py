@@ -1,13 +1,12 @@
 """Prompt assembly. Prompt text lives in llm/prompts/*.md (versioned; hash logged per call).
 
-Fairness (plan section 2.3, item 6): the single agent's system prompt contains the
-union of the three specialists' strategy knowledge, verbatim. Tested in tests/unit.
+Fairness: the single agent's system prompt contains the union of the three specialists'
+strategy knowledge, verbatim (tested in tests/unit/test_llm_agents.py).
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -43,10 +42,6 @@ def system_specialist(perspective: str) -> str:
 
 def system_coordinator() -> str:
     return "\n\n".join([_read("rules"), all_knowledge(), _read("role_coordinator")])
-
-
-def system_critic() -> str:
-    return "\n\n".join([_read("rules"), all_knowledge(), _read("role_critic")])
 
 
 def prompt_version() -> str:
@@ -87,15 +82,16 @@ def user_single(ctx_text: str) -> str:
 
 
 def user_specialist(ctx_text: str, perspective: str) -> str:
-    return ctx_text + f"\n\nAssess every candidate from the {perspective} perspective only."
+    return ctx_text + f"\n\nNominate your 3 best shots from the {perspective} perspective."
 
 
-def user_coordinator(ctx_text: str, reports: dict[str, dict]) -> str:
-    rep = "\n".join(f"### {name} specialist\n{json.dumps(r, ensure_ascii=False)}"
-                    for name, r in reports.items())
-    return f"{ctx_text}\n\n## Specialist reports\n{rep}\n\nChoose one shot id."
-
-
-def user_critic(ctx_text: str, decision: dict) -> str:
-    return (f"{ctx_text}\n\n## Chosen shot\n{json.dumps(decision, ensure_ascii=False)}\n\n"
-            "Approve or reject this choice.")
+def user_coordinator(ctx_text: str, shortlists: dict[str, list[dict]],
+                     nominated: list[str]) -> str:
+    """The coordinator sees the position, the full candidate table (to read each nominated
+    line) and every specialist's ranked nominations with reasons."""
+    parts = []
+    for name, picks in shortlists.items():
+        lines = "\n".join(f"  {i + 1}. {p['shot_id']}: {p['reason']}" for i, p in enumerate(picks))
+        parts.append(f"### {name} specialist\n{lines or '  (no valid nominations)'}")
+    return (f"{ctx_text}\n\n## Specialist nominations\n" + "\n".join(parts)
+            + f"\n\nChoose one of the nominated shots: {', '.join(nominated)}.")

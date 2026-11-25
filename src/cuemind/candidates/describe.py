@@ -101,8 +101,8 @@ def state_summary(state: TableState) -> str:
         lines.append(f"You play {g[me]}; the opponent plays {g[opp]}.")
     mine, theirs = state.remaining(me), state.remaining(opp)
     if state.on_the_eight(me):
-        lines.append("You are ON THE 8: pocket the 8 in the called pocket to win; any foul or "
-                     "wrong pocket on the 8 loses.")
+        lines.append("You are ON THE 8: pocket the 8 in the called pocket to win; pocketing the 8 "
+                     "in the wrong pocket or on a shot with a foul (e.g. a scratch) loses.")
     else:
         lines.append(f"Your balls left ({len(mine)}): {', '.join(mine) or 'none'}.")
     if g[opp] != "open":

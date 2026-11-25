@@ -1,8 +1,0 @@
-# Dev-split pilot used for prompt iteration (never the test split).
-exp_id: dev_pilot
-positions: [data/positions/dev.jsonl]
-systems: [b2, sa, ma]
-access_levels: [L2]
-repeats: 1
-threads: 4
-llm: {llm: ollama}   # local model; use {llm: claude, max_usd: N} for Vertex

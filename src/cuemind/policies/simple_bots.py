@@ -1,18 +1,8 @@
-"""Non-LLM reference policies B0 (random) and B1 (geometric: easiest pot)."""
+"""B1: geometric easiest-pot bot (used only in the v2 pilot)."""
 
 from __future__ import annotations
 
 from cuemind.policies.base import Decision, DecisionContext, intent_of
-
-
-class RandomBot:
-    """B0: uniformly random candidate (seeded by the game RNG). A floor for every metric."""
-
-    name = "B0_random"
-
-    def decide(self, ctx: DecisionContext) -> Decision:
-        c = ctx.candidates[int(ctx.rng.integers(len(ctx.candidates)))]
-        return Decision(shot_id=c.shot_id, intent=intent_of(c), rationale="random choice")
 
 
 class GeometricBot:

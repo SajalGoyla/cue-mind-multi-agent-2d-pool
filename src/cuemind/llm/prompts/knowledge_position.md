@@ -1,5 +1,5 @@
 ## Position: where the cue ball goes
-- The best shot is often the one that leaves the next shot easy, not just the easiest pot now. A slightly harder pot that leaves an easy next shot can be worth more than an easy pot that leaves nothing.
-- Avoid leaving the cue ball frozen on a rail, behind other balls, or with no viable next pot.
-- Speed and spin change where the cue ball stops: draw brings it back, follow sends it forward, stun stops it near the contact point. Prefer the variant whose cue-ball ending gives the best next shot, as long as the pot probability stays high.
-- Clusters of balls are hard to pot; breaking them early, when it is safe, makes later shots easier.
+- The same pot can leave very different next shots depending on speed and spin. Think about where the cue ball will stop: draw brings it back towards where it started, stun sends it off at a right angle to the object ball's path, follow sends it forward along that path.
+- Prefer the stroke that leaves the cue ball near the middle of the table with a clear, easy shot at another of your balls, and away from rails, pockets and the opponent's balls.
+- Soft speed gives more control; firm speed is needed only to travel far or to break a cluster.
+- A slightly harder pot that leaves an easy next shot can be better than an easy pot that leaves nothing, but never trade away a likely pot for a long, thin one.

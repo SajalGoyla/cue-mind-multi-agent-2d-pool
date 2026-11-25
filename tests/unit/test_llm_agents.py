@@ -1,12 +1,15 @@
-"""LLM layer and agents, tested offline with FakeLLM (no API calls)."""
+"""LLM layer and agents (v2), tested offline with fake clients (no model calls)."""
+
+import re
 
 import pytest
 
+from cuemind.agents.graph_multi import clean_picks
 from cuemind.candidates.pipeline import PrepConfig, prepare
 from cuemind.llm import promptlib as P
-from cuemind.llm.cache import Budget, BudgetExceeded, ResponseCache, request_key
-from cuemind.llm.client import ClaudeVertexClient, FakeLLM, cost_usd
-from cuemind.llm.schemas import SingleDecision
+from cuemind.llm.cache import ResponseCache
+from cuemind.llm.client import FakeLLM, LLMResult, OllamaClient
+from cuemind.llm.schemas import CoordinatorDecision, Pick, Shortlist, SingleDecision
 from cuemind.policies.base import DecisionContext
 from cuemind.policies.multi_agent import MultiAgent
 from cuemind.policies.registry import make_policy
@@ -20,17 +23,35 @@ MID = TableState(cue=(0.5, 0.6), balls={"1": (0.20, 1.70), "3": (0.75, 1.2), "4"
 
 @pytest.fixture(scope="module")
 def ctx():
-    cands = prepare(MID, PrepConfig(access_level="L2", n_rollouts=4), rollout_key=(5,))
+    cands = prepare(MID, PrepConfig(), rollout_key=(5, 1))
     return DecisionContext(state=MID, candidates=cands,
                            history=[{"seat": "P2", "shot_id": "S03", "intent": "safety",
                                      "result": "nothing potted"}])
 
 
-def best_by_p_pot(ctx):
-    return max(ctx.candidates, key=lambda c: (c.rollouts.p_pot, -int(c.shot_id[1:]))).shot_id
+class Scripted:
+    """Fake client: each agent returns a scripted shortlist / decision."""
+
+    model = "scripted"
+
+    def __init__(self, firsts: dict[str, str], coord: str | None = None):
+        self.firsts, self.coord, self.calls = firsts, coord, []
+
+    def complete(self, *, system, user, schema, agent, repeat_idx=0):
+        self.calls.append(agent)
+        ids = re.findall(r"^(S\d{2}) \|", user, re.M)
+        if schema is Shortlist:
+            first = self.firsts[agent]
+            rest = [i for i in ids if i != first][:2]
+            obj = Shortlist(picks=[Pick(shot_id=i, reason=f"{agent} reason") for i in [first, *rest]])
+        elif schema is CoordinatorDecision:
+            obj = CoordinatorDecision(shot_id=self.coord, rationale="coord", followed=["position"])
+        else:
+            obj = SingleDecision(shot_id=self.firsts.get("single", ids[0]), rationale="r")
+        return LLMResult(obj, "", "stop", {"input_tokens": 100, "output_tokens": 10}, 0.0)
 
 
-# ------------------------------------------------------------------ fairness of prompts
+# ------------------------------------------------------------------ prompts
 def test_single_agent_prompt_contains_all_specialist_knowledge():
     single = P.system_single()
     for p in P.PERSPECTIVES:
@@ -39,113 +60,87 @@ def test_single_agent_prompt_contains_all_specialist_knowledge():
         assert P.knowledge(p) in spec
         for other in set(P.PERSPECTIVES) - {p}:
             assert P.knowledge(other) not in spec
+    assert P.knowledge("safety") in P.system_coordinator()
     assert "{perspective}" not in P.system_specialist("offense")
-    assert len(P.prompt_version()) == 12
 
 
-def test_context_text_lists_every_candidate(ctx):
+def test_llm_text_contains_no_forecast_numbers(ctx):
     text = P.decision_context_text(ctx.state, ctx.candidates, ctx.history)
     for c in ctx.candidates:
         assert f"{c.shot_id} | {c.description}" in text
-    assert "Opponent: safety (S03)" in text and "None" not in text
+    assert "%" not in text and "realistic strokes" not in text and "preview" not in text
+    assert "Opponent: safety (S03)" in text
 
 
 # ------------------------------------------------------------------ single agent
 def test_single_agent_decides_validly(ctx):
     llm = FakeLLM("best")
     d = SingleAgent(llm).decide(ctx)
-    assert d.shot_id == best_by_p_pot(ctx) and not d.fallback
-    assert d.usage["calls"] == 1 and len(llm.calls) == 1
-    assert d.trace["agents"][0]["parsed"]["shot_id"] == d.shot_id
+    assert ctx.by_id(d.shot_id) is not None and not d.fallback and d.usage["calls"] == 1
 
 
-def test_invalid_ids_retry_once_then_fall_back(ctx):
+def test_invalid_answers_retry_once_then_geometry_fallback(ctx):
     llm = FakeLLM("invalid")
     d = SingleAgent(llm).decide(ctx)
-    assert d.fallback and len(llm.calls) == 2 and d.usage["calls"] == 2
-    d2 = SingleAgent(FakeLLM("error")).decide(ctx)
-    assert d2.fallback
-
-
-def test_sa_vote_uses_four_samples(ctx):
-    llm = FakeLLM("best")
-    d = SingleAgent(llm, n_votes=4).decide(ctx)
-    assert [c["repeat_idx"] for c in llm.calls] == [0, 1, 2, 3]
-    assert d.trace["votes"] == {d.shot_id: 4}
+    assert d.fallback and len(llm.calls) == 2
+    fb = ctx.by_id(d.shot_id)
+    pots = [c for c in ctx.candidates if c.shot_type == "pot"]
+    assert fb.shot_type == "pot" and fb.geometry.ease == max(c.geometry.ease for c in pots)
+    assert SingleAgent(FakeLLM("error")).decide(ctx).fallback
 
 
 # ------------------------------------------------------------------ multi agent
-def test_multi_agent_graph_fans_out_and_coordinates(ctx):
-    llm = FakeLLM("best")
-    ma = MultiAgent(llm)
-    d = ma.decide(ctx)
-    agents = sorted(c["agent"] for c in llm.calls)
-    assert agents == ["coordinator", "offense", "position", "safety"]
-    assert set(d.trace["reports"]) == {"offense", "position", "safety"}
-    assert d.shot_id == best_by_p_pot(ctx) and not d.fallback and d.usage["calls"] == 4
-    assert set(d.trace["followed"]) == {"offense", "position", "safety"}
+def test_unanimous_specialists_skip_the_coordinator(ctx):
+    sid = ctx.candidates[0].shot_id
+    llm = Scripted({"offense": sid, "position": sid, "safety": sid})
+    d = MultiAgent(llm).decide(ctx)
+    assert d.shot_id == sid and d.trace["unanimous"] and "coordinator" not in llm.calls
+    assert sorted(llm.calls) == ["offense", "position", "safety"] and d.usage["calls"] == 3
 
 
-def test_multi_agent_ablation_and_critic(ctx):
-    llm = FakeLLM("best")
-    ma = MultiAgent(llm, specialists=("offense", "safety"))
-    assert ma.name == "MA-no-position"
-    ma.decide(ctx)
-    assert sorted(c["agent"] for c in llm.calls) == ["coordinator", "offense", "safety"]
-    llm2 = FakeLLM("best")
-    d = MultiAgent(llm2, critic=True).decide(ctx)
-    assert "critic" in [c["agent"] for c in llm2.calls] and d.trace["critic"]["approve"]
+def test_coordinator_chooses_from_the_union(ctx):
+    a, b, c = (x.shot_id for x in ctx.candidates[:3])
+    llm = Scripted({"offense": a, "position": b, "safety": c}, coord=b)
+    d = MultiAgent(llm).decide(ctx)
+    assert d.shot_id == b and not d.trace["unanimous"] and "coordinator" in llm.calls
+    assert "position" in d.trace["followed"]
+    assert set(d.trace["shortlists"]) == {"offense", "position", "safety"}
 
 
-def test_multi_agent_falls_back_when_coordinator_fails(ctx):
-    d = MultiAgent(FakeLLM("invalid")).decide(ctx)
+def test_coordinator_outside_union_falls_back(ctx):
+    a = ctx.candidates[0].shot_id
+    outside = next(x.shot_id for x in ctx.candidates
+                   if x.shot_id not in {y.shot_id for y in ctx.candidates[:3]})
+    # every specialist nominates only the first three rows, the coordinator picks another
+    llm = Scripted({"offense": a, "position": ctx.candidates[1].shot_id,
+                    "safety": ctx.candidates[2].shot_id}, coord=outside)
+    d = MultiAgent(llm).decide(ctx)
+    assert llm.calls.count("coordinator") == 2  # one corrective retry, then the fallback rule
     assert d.fallback
 
 
-def test_registry_builds_llm_policies_with_fake_llm():
-    for name in ("sa", "sa-vote", "ma", "ma+critic", "ma-no-safety"):
-        p = make_policy(name, llm="fake")
-        assert hasattr(p, "decide")
+def test_clean_picks_filters_dedupes_and_trims():
+    sl = Shortlist(picks=[Pick(shot_id="S01", reason=" ".join(["w"] * 30)),
+                          Pick(shot_id="S99", reason="invalid"), Pick(shot_id="S01", reason="dup"),
+                          Pick(shot_id="S02", reason="ok"), Pick(shot_id="S03", reason="ok"),
+                          Pick(shot_id="S04", reason="fourth")])
+    out = clean_picks(sl, {"S01", "S02", "S03", "S04"})
+    assert [p["shot_id"] for p in out] == ["S01", "S02", "S03"]
+    assert len(out[0]["reason"].split()) == 20
 
 
-# ------------------------------------------------------------------ cache, budget, cost
-def test_cache_hit_and_offline_mode(tmp_path):
-    cache = ResponseCache(tmp_path / "c.sqlite")
-    client = ClaudeVertexClient("claude-haiku-5-5", "medium", cache=cache, offline=True,
-                                project_id="x")
-    miss = client.complete(system="s", user="u", schema=SingleDecision, agent="single")
-    assert miss.parsed is None and "offline" in miss.error
-    key = request_key(model="claude-haiku-5-5", effort="medium", system="s", user="u",
-                      schema="SingleDecision", repeat_idx=0)
-    cache.put(key, {"parsed": {"shot_id": "S01", "intent": "offense", "rationale": "r",
-                               "confidence": 0.5}, "usage": {"cost_usd": 0.001}})
-    hit = client.complete(system="s", user="u", schema=SingleDecision, agent="single")
-    assert hit.cached and hit.parsed.shot_id == "S01" and len(cache) == 1
+def test_registry_builds_v2_policies():
+    for name in ("stat", "b1", "sa", "ma"):
+        assert hasattr(make_policy(name, llm="fake"), "decide")
+    with pytest.raises(ValueError):
+        make_policy("sa-vote")
 
 
-def test_budget_guard(tmp_path):
-    b = Budget(tmp_path / "b.sqlite", "run1", max_usd=0.01)
-    b.check()
-    b.add(0.006)
-    b.add(0.005)
-    with pytest.raises(BudgetExceeded):
-        b.check()
-    assert Budget(tmp_path / "b.sqlite", "run2", 0.01).spent() == 0.0
-
-
-def test_cost_formula():
-    u = {"input_tokens": 1_000_000, "output_tokens": 1_000_000, "cache_read_tokens": 0}
-    assert cost_usd("claude-haiku-5-5", u) == pytest.approx(0.60)
-    assert cost_usd("unknown-model", u) == 0.0
-
-
-# ------------------------------------------------------------------ ollama (mocked HTTP)
-def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
+# ------------------------------------------------------------------ ollama client (mocked)
+def test_ollama_client_parses_caches_retries_and_reports_errors(tmp_path, monkeypatch):
     import json as _json
 
     import httpx
-
-    from cuemind.llm.client import OllamaClient
 
     sent = {}
 
@@ -156,8 +151,7 @@ def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
             pass
 
         def json(self):
-            return {"message": {"content": _json.dumps({"shot_id": "S02", "intent": "position",
-                                                         "rationale": "leave", "confidence": 0.8})},
+            return {"message": {"content": _json.dumps({"shot_id": "S02", "rationale": "x"})},
                     "done_reason": "stop", "prompt_eval_count": 900, "eval_count": 60}
 
     def fake_post(url, json=None, timeout=None):
@@ -167,21 +161,12 @@ def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
     monkeypatch.setattr(httpx, "post", fake_post)
     client = OllamaClient("qwen-test", cache=ResponseCache(tmp_path / "c.sqlite"))
     r = client.complete(system="s", user="u", schema=SingleDecision, agent="single", repeat_idx=2)
-    assert r.parsed.shot_id == "S02" and r.usage["input_tokens"] == 900 and r.usage["cost_usd"] == 0
-    assert sent["url"].endswith("/api/chat") and sent["body"]["options"]["seed"] == 1002
-    assert sent["body"]["format"]["properties"]["shot_id"]
-    again = client.complete(system="s", user="u", schema=SingleDecision, agent="single", repeat_idx=2)
-    assert again.cached and again.parsed.shot_id == "S02"
+    assert r.parsed.shot_id == "S02" and r.usage["input_tokens"] == 900
+    assert sent["body"]["options"]["seed"] == 1002 and sent["body"]["format"]["properties"]["shot_id"]
+    assert client.complete(system="s", user="u", schema=SingleDecision, agent="single",
+                           repeat_idx=2).cached
 
-    def refuse(url, json=None, timeout=None):
-        raise httpx.ConnectError("refused")
-
-    monkeypatch.setattr(httpx, "post", refuse)
     monkeypatch.setattr(OllamaClient, "RETRY_DELAYS_S", (0, 0))
-    bad = OllamaClient("qwen-test").complete(system="s", user="x", schema=SingleDecision, agent="a")
-    assert bad.parsed is None and "ollama serve" in bad.error
-
-    # a server that fails twice and then answers is retried transparently
     calls = {"n": 0}
 
     def flaky(url, json=None, timeout=None):
@@ -189,16 +174,22 @@ def test_ollama_client_parses_caches_and_reports_errors(tmp_path, monkeypatch):
         if calls["n"] == 1:
             raise httpx.ConnectError("restarting")
         if calls["n"] == 2:
-            raise httpx.ReadError("connection forcibly closed")
+            raise httpx.ReadError("connection reset")
         return Resp()
 
     monkeypatch.setattr(httpx, "post", flaky)
-    ok = OllamaClient("qwen-test").complete(system="s", user="y", schema=SingleDecision, agent="a")
-    assert ok.parsed is not None and calls["n"] == 3
+    assert OllamaClient("q").complete(system="s", user="y", schema=SingleDecision,
+                                      agent="a").parsed is not None and calls["n"] == 3
+
+    def refuse(url, json=None, timeout=None):
+        raise httpx.ConnectError("refused")
+
+    monkeypatch.setattr(httpx, "post", refuse)
+    bad = OllamaClient("q").complete(system="s", user="z", schema=SingleDecision, agent="a")
+    assert bad.parsed is None and "ollama serve" in bad.error
 
 
-def test_confidence_percentages_are_normalised():
-    from cuemind.llm.schemas import clamp01
-
-    assert clamp01(0.4) == 0.4 and clamp01(95) == 0.95 and clamp01(-3) == 0.0
-    assert clamp01(500) == 1.0 and clamp01("x") == 0.5
+def test_offline_cache_only_mode(tmp_path):
+    c = OllamaClient("q", cache=ResponseCache(tmp_path / "c.sqlite"), offline=True)
+    r = c.complete(system="s", user="u", schema=SingleDecision, agent="a")
+    assert r.parsed is None and "offline" in r.error

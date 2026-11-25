@@ -48,11 +48,11 @@ class Policy(Protocol):
 
 
 def fallback_choice(cands: list[Candidate]) -> Candidate:
-    """The shared fallback rule (fairness contract): highest p_pot when simulation stats are
-    available, otherwise highest geometric ease; pots before safeties; then lowest id."""
+    """The shared fallback rule for LLM systems (fairness contract), geometry only (D-029):
+    pots before safeties, highest geometric ease, medium stun preferred, then lowest id."""
     def key(c: Candidate):
-        p = c.rollouts.p_pot if c.rollouts else (1.0 if c.preview and c.preview.pots_called else 0.0)
-        return (c.shot_type != "pot", -p, -c.geometry.ease, c.shot_id)
+        plain = (c.power_label, c.spin_label) == ("medium", "stun")
+        return (c.shot_type != "pot", -c.geometry.ease, not plain, c.shot_id)
     return min(cands, key=key)
 
 

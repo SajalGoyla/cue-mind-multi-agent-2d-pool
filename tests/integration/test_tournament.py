@@ -6,8 +6,8 @@ from cuemind.eval.tournament import build_jobs, run_tournament
 
 
 def test_paired_tournament_runs_resumes_and_summarises(tmp_path):
-    jobs = build_jobs("t", [("b1", "b0")], seeds=[1, 2], noise="medium",
-                      prep=PrepConfig(access_level="L0"), max_shots=6)
+    jobs = build_jobs("t", [("stat", "b1")], seeds=[1, 2], noise="medium",
+                      prep=PrepConfig(n_forecast=1), max_shots=6)
     assert len(jobs) == 4 and len({j.game_id for j in jobs}) == 4
     res = run_tournament(jobs, tmp_path, workers=2, progress=False)
     assert len(res) == 4
@@ -21,11 +21,11 @@ def test_paired_tournament_runs_resumes_and_summarises(tmp_path):
     assert len((tmp_path / "games.jsonl").read_text(encoding="utf-8").splitlines()) == 4
 
     df = game_rows(res)
-    assert set(df.system) == {"b1", "b0"} and len(df) == 8
-    s = pairing_summary(res, "b1", "b0")
+    assert set(df.system) == {"stat", "b1"} and len(df) == 8
+    s = pairing_summary(res, "stat", "b1")
     assert s["games"] == 4 and s["paired_seeds"] == 2 and 0 <= s["win_rate"] <= 1
     g = json.loads(lines[0])
-    assert "seat_metrics" in g and g["prep"]["access_level"] == "L0"
+    assert "seat_metrics" in g and g["prep"]["n_forecast"] == 1
 
 
 def test_midgame_tournament_swaps_the_shooter_seat(tmp_path):
@@ -36,11 +36,11 @@ def test_midgame_tournament_swaps_the_shooter_seat(tmp_path):
                          groups={"P1": "solids", "P2": "stripes"}, shooter=s).model_dump()
               for s in ("P1", "P2")]
     recs = [{"position_id": f"p{i}", "state": st} for i, st in enumerate(states)]
-    jobs = build_midgame_jobs("m", [("b2", "b1")], recs, "medium", PrepConfig(access_level="L0"),
+    jobs = build_midgame_jobs("m", [("stat", "b1")], recs, "medium", PrepConfig(n_forecast=1),
                               max_shots=4)
     assert len(jobs) == 4 and len({j.game_id for j in jobs}) == 4
     # whoever is listed first takes the shooter's seat
-    j = jobs[2]  # second position (P2 to shoot), b2 first
-    assert j.start_id.endswith("b2first") and j.p2 == "b2"
+    j = jobs[2]  # second position (P2 to shoot), stat first
+    assert j.start_id.endswith("statfirst") and j.p2 == "stat"
     res = run_tournament(jobs, tmp_path, workers=2, progress=False)
     assert len(res) == 4 and all(g["n_shots"] <= 4 for g in res)

@@ -1,7 +1,7 @@
 """Play a full game between two policies, logging every decision as one JSON record.
 
-Usage (baseline sanity check):
-    python -m cuemind.game.runner --p1 b1 --p2 b0 --games 2 --noise medium
+Usage (sanity check):
+    python -m cuemind.game.runner --p1 stat --p2 b1 --games 2 --noise low
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ from cuemind.candidates.pipeline import PrepConfig, prepare
 from cuemind.game.ball_in_hand import resolve_ball_in_hand
 from cuemind.game.break_shot import break_stroke
 from cuemind.game.rules import Call, advance, judge
-from cuemind.llm.cache import BudgetExceeded
 from cuemind.policies.base import Decision, DecisionContext, Policy, fallback_choice
 from cuemind.sim.execute import extract_events, simulate, warm_up
 from cuemind.sim.noise import get_noise, rng_for
@@ -65,8 +64,6 @@ def _decide_safely(policy: Policy, ctx: DecisionContext) -> Decision:
             return d
         err = f"unknown shot_id {d.shot_id!r}"
         trace, usage = d.trace, d.usage
-    except BudgetExceeded:
-        raise  # stop the game; the run resumes later from the response cache
     except Exception as exc:  # noqa: BLE001
         err = f"{type(exc).__name__}: {exc}"
         trace, usage = {"traceback": traceback.format_exc(limit=3)}, {}
@@ -84,7 +81,7 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
     start_state is given. Execution noise uses common random numbers keyed by
     (seed, shot index), so paired games with swapped seats share the same noise draws."""
     warm_up()
-    prep = prep or PrepConfig(noise=noise)
+    prep = prep or PrepConfig()
     noise_model = get_noise(noise)
     game_id = game_id or f"{exp_id}_seed{seed}"
     state = start_state if start_state is not None else rack_state(seed)
@@ -157,8 +154,6 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
                 status, winner = "finished", j.winner
                 break
             state = advance(state, j, cue_after, balls_after)
-    except BudgetExceeded:
-        raise
     except Exception as exc:  # noqa: BLE001 - record and surface, never hang a tournament
         status, error = "error", f"{type(exc).__name__}: {exc}\n{traceback.format_exc(limit=5)}"
 
@@ -175,11 +170,10 @@ def main() -> None:
     ap.add_argument("--p2", default="b1")
     ap.add_argument("--games", type=int, default=1)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--noise", default="medium")
-    ap.add_argument("--access", default="L2")
+    ap.add_argument("--noise", default="low", help="execution noise while playing")
     ap.add_argument("--log", default=None, help="JSONL path for per-shot records")
     a = ap.parse_args()
-    prep = PrepConfig(access_level=a.access, noise=a.noise)
+    prep = PrepConfig()
     for g in range(a.games):
         res = play_game({"P1": make_policy(a.p1), "P2": make_policy(a.p2)}, seed=a.seed + g,
                         noise=a.noise, prep=prep, log_path=Path(a.log) if a.log else None)

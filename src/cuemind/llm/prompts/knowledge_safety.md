@@ -1,5 +1,5 @@
-## Safety: risk and defense
-- Weigh what happens when you miss: the opponent's best shot after your shot matters as much as your chance of potting.
-- If your best pot is below roughly 40-50% and a safety leaves the opponent a poor shot, the safety is usually better.
-- Fouls are expensive: ball in hand lets the opponent choose the ideal spot. Avoid shots with real scratch or foul risk unless the reward is large.
-- Be more defensive when the opponent is close to winning (few balls left or on the 8), and never risk pocketing the 8 early.
+## Safety: risk and defence
+- Weigh what happens when you miss: what the opponent gets afterwards matters as much as your chance of potting.
+- The lowest-risk shot is often an easy pot played softly, not a safety. Recommend a safety only when every pot is hard or long, or when the opponent is close to winning (few balls left or on the 8).
+- Fouls are expensive: ball in hand lets the opponent choose the ideal spot. Avoid firm strokes and follow on shots where the cue ball travels towards a pocket.
+- Never risk pocketing the 8 early.

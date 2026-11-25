@@ -1,14 +1,13 @@
-"""Build policies from short names used in CLIs and experiment configs.
+"""Build policies from short names used in CLIs and experiment configs (v2).
 
-Names: b0, b1, b2 (bots); sa, sa-vote (4 votes); ma, ma+critic, ma-no-offense,
-ma-no-position, ma-no-safety (LLM systems).
+Names: stat (simulation-based reference player), b1 (easiest pot; pilot only),
+sa (single LLM agent), ma (multi-agent team).
 
-LLM policies accept keyword arguments (from experiment configs):
-    llm: "ollama" (local open-weight model; default, or CUEMIND_LLM), "claude" (Vertex AI)
-         or "fake" (offline tests)
-    model: override CUEMIND_OLLAMA_MODEL / CUEMIND_MODEL; effort (Claude) / temperature (Ollama)
-    run_id, max_usd: budget guard shared by all worker processes
-    offline: true -> cache-only (no API calls)
+LLM policies accept keyword arguments from experiment configs:
+    llm: "ollama" (default, or CUEMIND_LLM) or "fake" (offline tests)
+    model: override CUEMIND_OLLAMA_MODEL (default qwen2.5:3b-instruct)
+    temperature: sampling temperature (default 0.7)
+    offline: true -> cache-only (no model calls)
 """
 
 from __future__ import annotations
@@ -17,63 +16,42 @@ import os
 from typing import Any
 
 from cuemind.policies.search_bot import SearchBot
-from cuemind.policies.simple_bots import GeometricBot, RandomBot
+from cuemind.policies.simple_bots import GeometricBot
 
 
 def make_llm_client(**kw: Any):
-    from cuemind.llm.cache import Budget, ResponseCache
-    from cuemind.llm.client import ClaudeVertexClient, FakeLLM, OllamaClient
+    from cuemind.llm.cache import ResponseCache
+    from cuemind.llm.client import FakeLLM, OllamaClient
 
     kind = kw.get("llm") or os.environ.get("CUEMIND_LLM", "ollama")
     if kind == "fake":
         return FakeLLM(kw.get("fake_mode", "best"))
-    cache_path = kw.get("cache_path") or os.environ.get("CUEMIND_LLM_CACHE",
-                                                        "results/cache/llm_cache.sqlite")
-    cache = ResponseCache(cache_path)
-    if kind == "ollama":
-        return OllamaClient(kw.get("model"), temperature=float(kw.get("temperature", 0.7)),
-                            cache=cache, offline=bool(kw.get("offline", False)))
-    if kind != "claude":
-        raise ValueError(f"unknown llm kind {kind!r}; use ollama, claude or fake")
-    budget = None
-    if kw.get("max_usd") is not None:
-        budget = Budget(cache_path, kw.get("run_id", "default"), float(kw["max_usd"]))
-    return ClaudeVertexClient(kw.get("model"), kw.get("effort"), cache=cache, budget=budget,
-                              offline=bool(kw.get("offline", False)))
+    if kind != "ollama":
+        raise ValueError(f"unknown llm kind {kind!r}; use ollama or fake")
+    cache = ResponseCache(kw.get("cache_path") or os.environ.get(
+        "CUEMIND_LLM_CACHE", "results/cache/llm_cache.sqlite"))
+    return OllamaClient(kw.get("model"), temperature=float(kw.get("temperature", 0.7)),
+                        cache=cache, offline=bool(kw.get("offline", False)))
 
 
-def _sa(n_votes: int):
-    def build(**kw):
-        from cuemind.policies.single_agent import SingleAgent
+def _sa(**kw):
+    from cuemind.policies.single_agent import SingleAgent
 
-        return SingleAgent(make_llm_client(**kw), n_votes=n_votes)
-    return build
+    return SingleAgent(make_llm_client(**kw))
 
 
-def _ma(specialists: tuple[str, ...] = ("offense", "position", "safety"), critic: bool = False):
-    def build(**kw):
-        from cuemind.policies.multi_agent import MultiAgent
+def _ma(**kw):
+    from cuemind.policies.multi_agent import MultiAgent
 
-        return MultiAgent(make_llm_client(**kw), specialists=specialists, critic=critic)
-    return build
+    return MultiAgent(make_llm_client(**kw))
 
 
 _BUILDERS = {
-    "b0": lambda **kw: RandomBot(),
+    "stat": lambda **kw: SearchBot(),
     "b1": lambda **kw: GeometricBot(),
-    "b2": lambda **kw: SearchBot(kw.get("weights")),
-    "sa": _sa(1),
-    "sa-vote": _sa(4),
-    "ma": _ma(),
-    "ma+critic": _ma(critic=True),
-    "ma-no-offense": _ma(("position", "safety")),
-    "ma-no-position": _ma(("offense", "safety")),
-    "ma-no-safety": _ma(("offense", "position")),
+    "sa": _sa,
+    "ma": _ma,
 }
-
-
-def register(name: str, builder) -> None:
-    _BUILDERS[name] = builder
 
 
 def make_policy(name: str, **kwargs: Any):
