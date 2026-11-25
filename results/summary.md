@@ -30,6 +30,17 @@ Errors: 0 games; shot-cap draws: 0.
 
 Figure: `results/figures/e0_noise_win_rates.png`
 
+## e2: tournaments (`results/e2/games.jsonl`)
+
+| noise | system | vs | games | win rate [95% CI] | paired seed score [95% CI] | sign-test p | shots/game | pot success | fouls/game | safety rate |
+|---|---|---|---|---|---|---|---|---|---|---|
+| medium | ma | sa | 28 | 0.43 [0.27, 0.61] | -0.14 [-0.50, +0.29] | 0.727 | 20.5 | 0.66 | 0.79 | 0.26 |
+| medium | sa | ma | 28 | 0.57 [0.39, 0.73] | +0.14 [-0.29, +0.50] | 0.727 | 20.5 | 0.59 | 0.75 | 0.17 |
+
+Errors: 0 games; shot-cap draws: 0.
+
+Figure: `results/figures/e2_win_rates.png`
+
 ## dev_pilot: decision-level results (`results/dev_pilot/decisions.jsonl`)
 
 | system | info | n | mean regret [95% CI] | top-1 | normalised | fallback | calls | $/decision | latency s |

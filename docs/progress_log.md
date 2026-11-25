@@ -188,3 +188,20 @@ One entry per working session: what was done, how it was tested, where outputs a
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
 - Build the positions dataset at the chosen noise; dev pilot; E1/E4 once Vertex quota is available.
 - Human review of hard-case labels; TA feedback into `docs/ta_feedback.md`.
+
+## 2026-11-25: Status snapshot for the team
+
+**Finished and committed:** E0, E0b (bot tournaments), dataset (dev 60 / test 180 / 9 draft hard cases), E1-bots, dev pilot rounds 0–1 and frozen prompts (`prompts-v1`), E1 (main comparison), E4 (information levels), E10 (decision variance), E5 data (test positions re-annotated at low/high noise). All numbers: `results/summary.md`.
+
+**E2 (full games) is partial: 28 of 90 games**, all in the MA-vs-SA pairing (14 paired seeds, `results/e2/games.jsonl`). The queue was running as a detached process and stopped on 2026-11-21 after ~01:30 with no error in its logs (most likely the laptop slept or shut down). Interim: MA wins 43 % [27, 61] of 28 games against SA, paired seed score −0.14 [−0.50, +0.29], sign test p = 0.73: no difference, consistent with E1. Pot success MA 0.66 vs SA 0.59; safety rate MA 26 % vs SA 17 %.
+
+**Not yet run:** rest of E2 (62 games: remaining MA–SA seed, SA–B2, MA–B2), E5 (noise ablation runs), E6 (specialist ablations), E3 (mid-game games), E9 (critic), E8 (Claude confirmation; uses Google Cloud credits, run only on request).
+
+**To resume** (needs the local model; resumes where it stopped):
+```
+$env:OLLAMA_NUM_PARALLEL="2"; Start-Process ollama -ArgumentList serve -WindowStyle Hidden
+.venv\Scripts\python.exe scripts\run_queue.py --concurrency 2 --watchdog-mb 3000 --only e2,e5_low,e5_high,e6,e3,e9,analyze
+```
+Estimated ~8.5 hours on the RTX 4060 laptop; keep the machine awake (Windows power settings) while it runs.
+
+**Team to-dos:** categorise failure cases (`docs/failure_analysis_e1.md`), review hard-case labels (`data/positions/hard_cases/`, set `reviewed_by`), add TA feedback (`docs/ta_feedback.md`), slides from `docs/presentation_outline.md`, report from `docs/report_draft_method.md` + `docs/report_draft_results.md`.

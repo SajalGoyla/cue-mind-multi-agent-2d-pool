@@ -1,0 +1,11 @@
+180 decisions to run (0 already done)
+  25/180
+  50/180
+  75/180
+  100/180
+  125/180
+  150/180
+  175/180
+system access_level  n  regret  top1  normalised  fallback_rate  safety_rate  calls_per_decision  cost_usd_per_decision  latency_s  latency_p95_s  regret_easy  regret_medium  regret_hard  regret_offense  regret_position  regret_defense
+    MA           L2 90   0.367 0.544       0.601            0.0        0.067                 4.0                    0.0     21.373         43.376        0.367            NaN          NaN           0.339            0.433           1.172
+    SA           L2 90   0.287 0.644       0.676            0.0        0.033                 1.0                    0.0      1.911          3.528        0.287            NaN          NaN           0.286            0.288           0.000

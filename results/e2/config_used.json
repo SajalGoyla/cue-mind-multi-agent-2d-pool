@@ -1,0 +1,68 @@
+{
+  "config": {
+    "exp_id": "e2",
+    "pairings": [
+      [
+        "ma",
+        "sa"
+      ],
+      [
+        "sa",
+        "b2"
+      ],
+      [
+        "ma",
+        "b2"
+      ]
+    ],
+    "seeds": {
+      "start": 3000,
+      "count": 15
+    },
+    "noise_levels": [
+      "medium"
+    ],
+    "max_shots": 150,
+    "prep": {
+      "access_level": "L2",
+      "n_rollouts": 8
+    },
+    "workers": 4,
+    "policy_kwargs": {
+      "sa": {
+        "llm": "ollama"
+      },
+      "ma": {
+        "llm": "ollama"
+      }
+    }
+  },
+  "seeds": [
+    3000,
+    3001,
+    3002,
+    3003,
+    3004,
+    3005,
+    3006,
+    3007,
+    3008,
+    3009,
+    3010,
+    3011,
+    3012,
+    3013,
+    3014
+  ],
+  "git_commit": "4d92c17",
+  "prep": {
+    "access_level": "L2",
+    "n_rollouts": 8,
+    "noise": "medium",
+    "max_pots": 12,
+    "max_safeties": 3,
+    "working_pots": 18,
+    "working_safeties": 4,
+    "min_p_pot": 0.1
+  }
+}
