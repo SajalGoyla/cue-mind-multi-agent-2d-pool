@@ -19,3 +19,4 @@ def test_demo_app_runs_offline():
     assert not at.exception, at.exception
     text = " ".join(m.value for m in at.markdown)
     assert "Choice: S" in text and "Single agent" in text and "specialist" in text
+    assert "Stat" in text

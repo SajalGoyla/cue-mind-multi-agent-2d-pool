@@ -20,16 +20,23 @@ ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 
 QUEUE = [
-    ("e4", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e4.yaml"]),
-    ("e10", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e10.yaml", "--limit", "30"]),
-    ("e2", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/e2.yaml"]),
-    ("e5_low", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e5_low.yaml"]),
-    ("e5_high", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e5_high.yaml"]),
-    ("e6", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e6.yaml"]),
-    ("e3", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/e3.yaml"]),
-    ("e9", [PY, "experiments/run_positions.py", "--config", "experiments/configs/e9.yaml"]),
+    ("v2_floor", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v2_floor.yaml"]),
+    ("v2_dev", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v2_dev.yaml"]),
+    ("v2_main", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v2_main.yaml"]),
     ("analyze", [PY, "experiments/analyze.py"]),
 ]
+
+
+def keep_awake() -> None:
+    """Ask Windows not to sleep while the queue runs (no settings are changed; the request
+    ends with the process). A sleeping laptop stopped an earlier run (2026-11-21)."""
+    try:
+        import ctypes
+
+        ES_CONTINUOUS, ES_SYSTEM_REQUIRED = 0x80000000, 0x00000001
+        ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
+    except (AttributeError, OSError):
+        pass
 
 
 def log(msg: str) -> None:
@@ -44,10 +51,11 @@ def main() -> int:
     ap.add_argument("--wait-for", default=None, help="experiment whose run log must finish first")
     ap.add_argument("--only", default=None, help="comma-separated subset of step names")
     ap.add_argument("--concurrency", type=int, default=2,
-                    help="threads per positions run / workers per tournament (memory-bound; D-026)")
+                    help="worker processes per tournament (memory-bound; D-026)")
     ap.add_argument("--watchdog-mb", type=float, default=3500,
                     help="restart Ollama when its runner exceeds this RSS (0 = off; D-028)")
     a = ap.parse_args()
+    keep_awake()
     if a.watchdog_mb > 0:
         sys.path.insert(0, str(Path(__file__).parent))
         from ollama_watchdog import Watchdog
@@ -61,9 +69,7 @@ def main() -> int:
             time.sleep(30)
     steps = [s for s in QUEUE if not a.only or s[0] in a.only.split(",")]
     for name, cmd in steps:
-        if "run_positions.py" in cmd[1]:
-            cmd = cmd + ["--threads", str(a.concurrency)]
-        elif "run_tournament.py" in cmd[1]:
+        if "run_tournament.py" in cmd[1]:
             cmd = cmd + ["--workers", str(a.concurrency)]
         log(f"start {name}: {' '.join(cmd[1:])}")
         t0 = time.time()

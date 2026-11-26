@@ -1,0 +1,11 @@
+# v2 step 1b: floor check. If SA wins < 10% against Stat, SA vs MA would be undetectable.
+exp_id: v2_floor
+pairings:
+  - [stat, sa]
+seeds: {start: 8100, count: 5}
+noise_levels: [none, low]
+max_shots: 150
+prep: {n_forecast: 3, forecast_noise: low}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama}

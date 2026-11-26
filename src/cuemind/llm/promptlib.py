@@ -86,12 +86,15 @@ def user_specialist(ctx_text: str, perspective: str) -> str:
 
 
 def user_coordinator(ctx_text: str, shortlists: dict[str, list[dict]],
-                     nominated: list[str]) -> str:
-    """The coordinator sees the position, the full candidate table (to read each nominated
-    line) and every specialist's ranked nominations with reasons."""
+                     nominated: list[str], descriptions: dict[str, str] | None = None) -> str:
+    """The coordinator sees the position, the full candidate table and every specialist's
+    ranked nominations, each repeated with its full shot line (a small model otherwise mixes
+    up which id is which shot) and the specialist's reason."""
+    desc = descriptions or {}
     parts = []
     for name, picks in shortlists.items():
-        lines = "\n".join(f"  {i + 1}. {p['shot_id']}: {p['reason']}" for i, p in enumerate(picks))
+        lines = "\n".join(f"  {i + 1}. {p['shot_id']} ({desc.get(p['shot_id'], '?')}): {p['reason']}"
+                          for i, p in enumerate(picks))
         parts.append(f"### {name} specialist\n{lines or '  (no valid nominations)'}")
     return (f"{ctx_text}\n\n## Specialist nominations\n" + "\n".join(parts)
             + f"\n\nChoose one of the nominated shots: {', '.join(nominated)}.")

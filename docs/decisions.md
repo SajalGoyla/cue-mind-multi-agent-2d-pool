@@ -32,6 +32,7 @@ Each entry records one design decision: the context, what we chose, the alternat
 | D-026 | 2026-11-20 | LLM experiments at concurrency 2 (Ollama 2 slots, model fully in VRAM) | Accepted |
 | D-027 | 2026-11-20 | Retry local-model infrastructure failures instead of recording fallbacks | Accepted |
 | D-028 | 2026-11-20 | Watchdog restarts Ollama when its runner's RAM exceeds 3.5 GB | Accepted |
+| D-029 | 2026-11-25 | v2 redesign: games only, geometry-only menu for LLMs, MA v2 shortlists, 3B model | Accepted |
 
 ---
 
@@ -218,3 +219,9 @@ Each entry records one design decision: the context, what we chose, the alternat
 - **Why it is safe for results.** Requests in flight during a restart fail at the HTTP level and are retried by the client (D-027); they never reach the agents' fallback path. Restart times are logged in `results/queue.log`. Decisions are unaffected: generation is seeded and model weights are identical.
 - **Procedure note.** The queue was stopped cleanly at 678 / 1,620 E4 decisions (all saved) to switch to the new client code, then resumed.
 - **Observed at the first restart (E4).** 3 calls failed with a connection reset (`httpx.ReadError`), which the first retry list did not cover; each went through the agents' corrective retry and succeeded (0 fallbacks in 800 LLM decisions), so those decisions carry a slightly different second prompt. The client now retries every `httpx.TransportError`; later experiment steps use the fixed client.
+
+## D-029: v2 redesign (games only)
+
+- **Context.** Team review of v1 found the positions benchmark circular (oracle and B2 built from the same simulator and ingredients; B2 score vs oracle correlation 0.70 over 1,460 candidates), too noisy for close calls (median oracle SE 0.20 vs median best–second gap 0.18; 17 of 180 positions clearly separated), and the v1 "L0" condition not truly simulation-free (menu selection and order came from simulation). Full plan and evidence: `docs/PLAN_V2.md`.
+- **Decision.** Games only: Stat vs Stat, Stat vs SA, Stat vs MA on the same 30 seeds, seats swapped, common random numbers, under playing noise `low` and `none`. LLMs see a geometry-only menu: every pot × 3 speeds × 3 spins plus safeties is forecast 3× at low noise, the top 15 are kept with every legal ball represented, and the order is shuffled per decision; no forecast numbers reach the LLMs, and their fallback rule is geometry-only. Stat (v1 B2, weights unchanged) uses the forecasts. MA v2: three specialists return top-3 shortlists; unanimous first choices skip the coordinator; otherwise the coordinator chooses from the union. All LLM agents use Qwen 2.5 3B Instruct (team decision), temperature 0.7, seeded. No oracle, no positions benchmark, no Claude client, no SA-vote/critic/ablations/B0.
+- **Consequences.** Simpler, defensible claim; lower statistical power (about ±13 points at 60 games per pairing). The menu's *selection* uses simulation, which the report states. v1 code, data and results remain under the tag `v1-positions-benchmark` and on `main`.

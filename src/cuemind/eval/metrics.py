@@ -10,14 +10,21 @@ import pandas as pd
 
 from cuemind.eval.stats import bootstrap_mean_ci, sign_test, wilson_ci
 
-USAGE_KEYS = ("calls", "input_tokens", "output_tokens", "cache_read_tokens", "cost_usd",
-              "latency_s")
+USAGE_KEYS = ("calls", "input_tokens", "output_tokens", "latency_s")
 
 
 def seat_metrics(records: list[dict]) -> dict[str, dict[str, Any]]:
     """Shot-level statistics for each seat in one game."""
     out: dict[str, dict[str, Any]] = defaultdict(lambda: defaultdict(float))
     decisions = [r for r in records if r["kind"] == "decision"]
+    prev_seat = None
+    for r in records:  # an inning (turn) starts whenever the shooter changes
+        if r["kind"] == "decision" and r["seat"] != prev_seat:
+            out[r["seat"]]["innings"] += 1
+        prev_seat = r["seat"]
+    for r in decisions:
+        if (r.get("trace") or {}).get("unanimous"):
+            out[r["seat"]]["unanimous"] += 1
     for i, r in enumerate(decisions):
         m = out[r["seat"]]
         m["decisions"] += 1
@@ -84,6 +91,24 @@ def pairing_summary(summaries: list[dict], system: str, opponent: str) -> dict[s
         "safety_success": tot("safety_successes") / max(tot("safeties"), 1),
         "balls_per_game": tot("balls_potted") / n,
         "fallback_rate": tot("fallbacks") / max(tot("decisions"), 1),
-        "cost_usd_per_game": tot("cost_usd") / n,
+        "balls_per_inning": tot("balls_potted") / max(tot("innings"), 1),
+        "calls_per_decision": tot("calls") / max(tot("decisions"), 1),
+        "input_tokens_per_decision": tot("input_tokens") / max(tot("decisions"), 1),
+        "output_tokens_per_decision": tot("output_tokens") / max(tot("decisions"), 1),
         "latency_s_per_decision": tot("decision_latency_s") / max(tot("decisions"), 1),
+        "unanimous_rate": tot("unanimous") / max(tot("decisions"), 1),
     }
+
+
+def selfplay_summary(summaries: list[dict], system: str) -> dict[str, Any]:
+    """Self-pairing (one game per seed): how often the breaker (seat P1) wins."""
+    gs = [g for g in summaries if g["players"]["P1"] == system == g["players"]["P2"]]
+    if not gs:
+        return {}
+    n = len(gs)
+    p1 = sum(1.0 if g["winner"] == "P1" else 0.5 if g["winner"] is None else 0.0 for g in gs)
+    lo, hi = wilson_ci(p1, n)
+    return {"system": system, "games": n, "breaker_win_rate": p1 / n,
+            "breaker_win_ci": (round(lo, 3), round(hi, 3)),
+            "mean_shots": sum(g["n_shots"] for g in gs) / n,
+            "errors": sum(g["status"] == "error" for g in gs)}

@@ -47,7 +47,9 @@ def build_jobs(exp_id: str, pairings: list[tuple[str, str]], seeds: list[int], n
     jobs = []
     for a, b in pairings:
         for s in seeds:
-            for p1, p2 in ((a, b), (b, a)):
+            # Self-pairings (e.g. Stat vs Stat): swapping seats replays the identical game,
+            # so one game per seed is played; it measures the breaker's advantage.
+            for p1, p2 in (((a, b),) if a == b else ((a, b), (b, a))):
                 jobs.append(GameJob(exp_id, s, p1, p2, noise, prep.to_dict(), max_shots,
                                     policy_kwargs or {}))
     return jobs

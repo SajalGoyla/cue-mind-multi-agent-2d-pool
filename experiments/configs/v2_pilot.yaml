@@ -1,0 +1,12 @@
+# v2 step 1: bots-only pilot (no LLM). Does Stat beat the easiest-pot bot B1 in full games,
+# and how big is the breaker advantage (Stat vs Stat, one game per seed)?
+# Pass: Stat vs B1 >= 60% with the Wilson interval above 50%.
+exp_id: v2_pilot
+pairings:
+  - [stat, b1]
+  - [stat, stat]
+seeds: {start: 8000, count: 30}
+noise_levels: [none, low]   # stroke noise while playing; forecasts always use low noise
+max_shots: 150
+prep: {n_forecast: 3, forecast_noise: low}
+workers: 10

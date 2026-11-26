@@ -28,6 +28,7 @@ K = 3
 class MAState(TypedDict, total=False):
     ctx_text: str
     valid_ids: list[str]
+    descriptions: dict[str, str]
     sample_idx: int
     shortlists: Annotated[dict[str, list[dict]], operator.or_]
     attempts: Annotated[list[dict], operator.add]
@@ -86,7 +87,8 @@ def _coordinator_node(client: LLMClient):
             return {"decision": None}
         allowed = set(nominated)
         res, att = call_with_check(client, system=system,
-                                   user=P.user_coordinator(state["ctx_text"], shortlists, nominated),
+                                   user=P.user_coordinator(state["ctx_text"], shortlists, nominated,
+                                                           state.get("descriptions")),
                                    schema=CoordinatorDecision, agent="coordinator",
                                    valid_ids=allowed,
                                    is_valid=lambda d: d.shot_id in allowed,

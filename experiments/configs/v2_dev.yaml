@@ -1,0 +1,13 @@
+# v2 step 2: prompt development games (dev seeds only; never the main seeds).
+exp_id: v2_dev
+pairings:
+  - [stat, sa]
+  - [stat, ma]
+seeds: {start: 8500, count: 3}
+noise_levels: [low]
+max_shots: 150
+prep: {n_forecast: 3, forecast_noise: low}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}

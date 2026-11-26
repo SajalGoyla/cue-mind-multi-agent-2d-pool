@@ -24,6 +24,7 @@ class MultiAgent:
         ctx_text = P.decision_context_text(ctx.state, ctx.candidates, ctx.history, ctx.ball_in_hand)
         out = self.graph.invoke({"ctx_text": ctx_text,
                                  "valid_ids": [c.shot_id for c in ctx.candidates],
+                                 "descriptions": {c.shot_id: c.description for c in ctx.candidates},
                                  "sample_idx": ctx.sample_idx, "shortlists": {}, "attempts": [],
                                  "decision": None, "unanimous": False})
         usage = sum_usage(out.get("attempts", []), time.perf_counter() - t0)

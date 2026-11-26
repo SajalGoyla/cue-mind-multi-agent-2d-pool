@@ -18,9 +18,8 @@ import pandas as pd
 import yaml
 
 from cuemind.candidates.pipeline import PrepConfig
-from cuemind.eval.metrics import pairing_summary
-from cuemind.eval.positions import load_positions
-from cuemind.eval.tournament import build_jobs, build_midgame_jobs, run_tournament
+from cuemind.eval.metrics import pairing_summary, selfplay_summary
+from cuemind.eval.tournament import build_jobs, run_tournament
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -59,21 +58,23 @@ def main(argv: list[str] | None = None) -> None:
 
     rows = []
     for noise in cfg.get("noise_levels", ["medium"]):
-        if cfg.get("start_positions"):  # E3: games from benchmark positions
-            sp = cfg["start_positions"]
-            recs = load_positions(ROOT / sp["file"])[: (a.seeds or sp.get("count", 20))]
-            jobs = build_midgame_jobs(exp_id, pairings, recs, noise, prep,
-                                      cfg.get("max_shots", 150), cfg.get("policy_kwargs"))
-        else:
-            jobs = build_jobs(exp_id, pairings, seeds, noise, prep, cfg.get("max_shots", 150),
-                              cfg.get("policy_kwargs"))
+        jobs = build_jobs(exp_id, pairings, seeds, noise, prep, cfg.get("max_shots", 150),
+                          cfg.get("policy_kwargs"))
         summaries = run_tournament(jobs, out, workers=workers)
         for x, y in pairings:
+            if x == y:
+                r = selfplay_summary(summaries, x)
+                if r:
+                    print(f"[{noise}] {x} vs {x}: breaker (P1) wins {r['breaker_win_rate']:.0%} "
+                          f"{r['breaker_win_ci']} of {r['games']} games, {r['mean_shots']:.1f} shots/game")
+                continue
             for s, o in ((x, y), (y, x)):
                 r = pairing_summary(summaries, s, o)
                 if r:
                     rows.append({"noise": noise, **r})
     df = pd.DataFrame(rows)
+    if df.empty:
+        return 0
     df.to_csv(out / "summary.csv", index=False)
     with pd.option_context("display.width", 200, "display.max_columns", 30):
         cols = ["noise", "system", "opponent", "games", "win_rate", "win_rate_ci", "paired_mean",

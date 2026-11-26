@@ -1,0 +1,15 @@
+# v2 main run: Stat vs Stat (control), Stat vs SA, Stat vs MA on the same 30 seeds,
+# seats swapped, common random numbers, under both playing-noise conditions.
+exp_id: v2_main
+pairings:
+  - [stat, stat]
+  - [stat, sa]
+  - [stat, ma]
+seeds: {start: 9000, count: 30}
+noise_levels: [low, none]
+max_shots: 150
+prep: {n_forecast: 3, forecast_noise: low}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}
