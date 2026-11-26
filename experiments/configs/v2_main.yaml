@@ -6,7 +6,7 @@ pairings:
   - [stat, sa]
   - [stat, ma]
 seeds: {start: 9000, count: 30}
-noise_levels: [low, none]
+noise_levels: [none, low]   # none = primary (passed the pilot); low = secondary
 max_shots: 150
 prep: {n_forecast: 3, forecast_noise: low}
 workers: 2

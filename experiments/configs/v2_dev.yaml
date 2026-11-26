@@ -4,7 +4,7 @@ pairings:
   - [stat, sa]
   - [stat, ma]
 seeds: {start: 8500, count: 3}
-noise_levels: [low]
+noise_levels: [none]   # primary condition (pilot)
 max_shots: 150
 prep: {n_forecast: 3, forecast_noise: low}
 workers: 2
