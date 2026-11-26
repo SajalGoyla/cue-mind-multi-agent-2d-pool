@@ -1,0 +1,7 @@
+2026-11-25 21:39:54 Ollama watchdog on (limit 3000 MB)
+2026-11-25 21:39:54 start v2_floor: experiments/run_tournament.py --config experiments/configs/v2_floor.yaml --workers 2
+2026-11-25 21:51:06 watchdog: llama-server RSS 3105 MB > 3000 MB, restarting Ollama
+2026-11-25 21:51:37 watchdog: restart 1 done (RSS now 0 MB)
+2026-11-25 21:51:57 end v2_floor: exit 0 after 12.0 min
+2026-11-25 21:51:57 start v2_dev: experiments/run_tournament.py --config experiments/configs/v2_dev.yaml --workers 2
+2026-11-25 22:00:58 end v2_dev: exit 0 after 9.0 min

@@ -3,4 +3,4 @@ You are the shot selector. Consider offense (potting), position (where the cue b
 
 Return:
 - shot_id: one of the listed ids;
-- rationale: at most 60 words explaining the choice, including why this speed and spin.
+- rationale: at most 60 words. Start by restating the chosen shot exactly as listed (ball, pocket, speed, spin), then explain the choice, including why this speed and spin.

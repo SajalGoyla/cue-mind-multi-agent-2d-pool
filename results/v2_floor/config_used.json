@@ -1,0 +1,44 @@
+{
+  "config": {
+    "exp_id": "v2_floor",
+    "pairings": [
+      [
+        "stat",
+        "sa"
+      ]
+    ],
+    "seeds": {
+      "start": 8100,
+      "count": 5
+    },
+    "noise_levels": [
+      "none",
+      "low"
+    ],
+    "max_shots": 150,
+    "prep": {
+      "n_forecast": 3,
+      "forecast_noise": "low"
+    },
+    "workers": 2,
+    "policy_kwargs": {
+      "sa": {
+        "llm": "ollama"
+      }
+    }
+  },
+  "seeds": [
+    8100,
+    8101,
+    8102,
+    8103,
+    8104
+  ],
+  "git_commit": "2ca786d",
+  "prep": {
+    "n_forecast": 3,
+    "forecast_noise": "low",
+    "max_pots": 12,
+    "max_safeties": 3
+  }
+}

@@ -35,8 +35,18 @@ def system_single() -> str:
     return "\n\n".join([_read("rules"), all_knowledge(), _read("role_single")])
 
 
+# The safety specialist is presented to the model as the "risk" specialist: a 3B model told it
+# is the "safety" specialist nominated safety shots first in ~90 % of dev decisions (D-030).
+DISPLAY = {"offense": "offense", "position": "position", "safety": "risk"}
+RISK_RULE = ("\n\nAs the risk specialist, judge which shots are least likely to foul, scratch or hand "
+             "the opponent an easy shot. A pot with easy or moderate geometry is usually the lowest-risk "
+             "shot; nominate a safety first only if every pot on the list has hard geometry.")
+
+
 def system_specialist(perspective: str) -> str:
-    role = _read("role_specialist").replace("{perspective}", perspective)
+    role = _read("role_specialist").replace("{perspective}", DISPLAY[perspective])
+    if perspective == "safety":
+        role += RISK_RULE
     return "\n\n".join([_read("rules"), knowledge(perspective), role])
 
 
@@ -82,7 +92,7 @@ def user_single(ctx_text: str) -> str:
 
 
 def user_specialist(ctx_text: str, perspective: str) -> str:
-    return ctx_text + f"\n\nNominate your 3 best shots from the {perspective} perspective."
+    return ctx_text + f"\n\nNominate your 3 best shots from the {DISPLAY[perspective]} perspective."
 
 
 def user_coordinator(ctx_text: str, shortlists: dict[str, list[dict]],

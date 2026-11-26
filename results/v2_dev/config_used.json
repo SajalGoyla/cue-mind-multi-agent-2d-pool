@@ -1,0 +1,48 @@
+{
+  "config": {
+    "exp_id": "v2_dev",
+    "pairings": [
+      [
+        "stat",
+        "sa"
+      ],
+      [
+        "stat",
+        "ma"
+      ]
+    ],
+    "seeds": {
+      "start": 8500,
+      "count": 3
+    },
+    "noise_levels": [
+      "none"
+    ],
+    "max_shots": 150,
+    "prep": {
+      "n_forecast": 3,
+      "forecast_noise": "low"
+    },
+    "workers": 2,
+    "policy_kwargs": {
+      "sa": {
+        "llm": "ollama"
+      },
+      "ma": {
+        "llm": "ollama"
+      }
+    }
+  },
+  "seeds": [
+    8500,
+    8501,
+    8502
+  ],
+  "git_commit": "2ca786d",
+  "prep": {
+    "n_forecast": 3,
+    "forecast_noise": "low",
+    "max_pots": 12,
+    "max_safeties": 3
+  }
+}

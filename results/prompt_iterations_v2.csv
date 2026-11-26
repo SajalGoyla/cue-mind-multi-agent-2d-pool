@@ -1,0 +1,4 @@
+round,prompt_version,dev_games_per_system,sa_pot_success,ma_pot_success,ma_unanimous_rate,ma_calls_per_decision,ma_latency_s,risk_specialist_safety_first,reason_speed_mismatch,fallbacks,change
+0,f02b461c6f8b,6,0.88,0.94,0.00,4.23,6.8,43/47,37/306,0,initial v2 prompts
+1,880f4850f4a1,6,0.96,0.89,0.10,4.05,7.8,38/42,20/371,0,"safety knowledge: safety first only if every pot is hard; reasons/rationale must restate the shot"
+2,472ccf436e3a,6,0.91,0.97,0.27,3.85,6.1,21/41,19/358,0,"safety specialist presented as risk specialist with an explicit first-pick rule (frozen: prompts-v2)"
