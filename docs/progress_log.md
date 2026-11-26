@@ -205,3 +205,17 @@ $env:OLLAMA_NUM_PARALLEL="2"; Start-Process ollama -ArgumentList serve -WindowSt
 Estimated ~8.5 hours on the RTX 4060 laptop; keep the machine awake (Windows power settings) while it runs.
 
 **Team to-dos:** categorise failure cases (`docs/failure_analysis_e1.md`), review hard-case labels (`data/positions/hard_cases/`, set `reviewed_by`), add TA feedback (`docs/ta_feedback.md`), slides from `docs/presentation_outline.md`, report from `docs/report_draft_method.md` + `docs/report_draft_results.md`.
+
+## 2026-11-25: v2 implementation, pilot, prompt rounds (branch `v2-games`)
+
+**Built (D-029, `docs/PLAN_V2.md`).** Tagged `v1-positions-benchmark`; new branch `v2-games`. v2 menu (every pot × 3 speeds × 3 spins + safeties, forecast 3× at low noise, top 15 with every legal ball represented, shuffled, geometry-only text), Stat (v1 B2 objective on the forecasts), SA, MA v2 (offense/position/safety top-3 shortlists → unanimous first choice played, otherwise coordinator over the union), geometry-only fallback, Qwen 2.5 3B Instruct via Ollama, games-only analysis, demo rewritten, v1 code/data/results removed from the branch (kept in the tag and on `main`). Tests: 55 pass.
+
+**Live check (3B).** Both systems decide without fallbacks; MA's coordinator and specialists sometimes described a shot with the wrong speed (3B mixes up ids), so nominations shown to the coordinator now repeat each shot's full line.
+
+**Pilot (bots only, 30 seeds; `results/v2_pilot/`).** Stat vs B1: zero playing noise 77 % [65, 86] (pass), low noise 57 % [44, 68] (fail). Stat vs Stat breaker win rate 37 % (none) / 43 % (low): no breaker advantage with the v2 menu (the earlier quick test with the v1 menu had shown 70 %). Zero noise is therefore the primary condition; low noise is also run (team decision) as the secondary, less sensitive condition.
+
+**Floor check (Stat vs SA, 10 games per condition; `results/v2_floor/`).** SA wins 2/10 (none) and 3/10 (low): above the 10 % floor in both. SA ≈ 2 s per decision; fallbacks ≈ 1.5 %.
+
+**Prompt rounds on dev seeds 8500–8502 (`results/v2_dev*`, `results/prompt_iterations_v2.csv`).** Round 1: shared safety knowledge (safety first only if every pot is hard) and reasons/rationales must restate the shot → speed-word mismatches 12 % → 5 %; safety specialist still put a safety first 90 %. Round 2: the safety specialist is presented as the *risk* specialist with an explicit first-pick rule → safety-first 51 %, MA unanimity 0 % → 27 %, MA 3.9 calls and ~6 s per decision. Frozen as `prompts-v2` (prompt files hash `472ccf436e3a`).
+
+**Main run started 22:21** (`results/v2_main/`): Stat vs Stat, Stat vs SA, Stat vs MA, seeds 9000–9029, playing noise none then low; detached queue with Ollama watchdog and keep-awake.
