@@ -57,3 +57,14 @@ One small open model; 60 games per pairing (wide intervals); the menu's *selecti
 ## Qualitative material
 
 Candidate moments (team decisions that worked and that went wrong, e.g. scratches after "firm draw" choices) are listed in `results/v2_main/moments.md`; check them in the demo's Replay tab (full logs in `results/v2_main/raw/`, local only).
+
+## Data and how to restore the raw logs
+
+- Per-game results (one line per game, with per-player statistics): `results/<exp>/games.jsonl` for `v2_pilot`, `v2_floor`, `v2_dev`, `v2_dev_r1`, `v2_dev_r2`, `v2_main`; per-pairing tables in `results/<exp>/summary.csv`; run logs in `results/*.log`.
+- Raw per-shot logs (every decision with the menu, forecasts, agent prompts/answers, shortlists and outcome) for all 536 v2 games are in `results/raw_logs_v2.zip` (7.8 MB). Restore them into `results/<exp>/raw/` from the repository root with:
+
+  ```
+  python -c "import zipfile; zipfile.ZipFile('results/raw_logs_v2.zip').extractall('.')"
+  ```
+
+  After restoring, the demo's Replay tab lists every game, and `python experiments/analyze.py` regenerates all tables, the figure and `results/v2_main/moments.md`.
