@@ -17,12 +17,14 @@ class MultiAgent:
 
     def __init__(self, client: LLMClient):
         self.client = client
-        self.graph = build_graph(client)
+        self._graphs: dict[str, object] = {}  # one compiled graph per information level
 
     def decide(self, ctx: DecisionContext) -> Decision:
         t0 = time.perf_counter()
         ctx_text = P.decision_context_text(ctx.state, ctx.candidates, ctx.history, ctx.ball_in_hand)
-        out = self.graph.invoke({"ctx_text": ctx_text,
+        if ctx.info not in self._graphs:
+            self._graphs[ctx.info] = build_graph(self.client, ctx.info)
+        out = self._graphs[ctx.info].invoke({"ctx_text": ctx_text,
                                  "valid_ids": [c.shot_id for c in ctx.candidates],
                                  "descriptions": {c.shot_id: c.description for c in ctx.candidates},
                                  "sample_idx": ctx.sample_idx, "shortlists": {}, "attempts": [],

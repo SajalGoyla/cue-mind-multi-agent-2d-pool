@@ -66,6 +66,7 @@ class Candidate(BaseModel):
     geometry: Geometry = Geometry()
     preview: Preview | None = None
     rollouts: Rollouts | None = None
+    hint: dict | None = None  # v3 condition A: simulation-free physics hint (candidates/hints.py)
     description: str = ""
 
     @property

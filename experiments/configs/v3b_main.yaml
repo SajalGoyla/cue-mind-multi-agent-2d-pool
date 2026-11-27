@@ -1,0 +1,15 @@
+# v3 condition B: everybody sees forecasts. Same menu as v2 (top 15 by 3 noisy forecasts),
+# but now SA and MA also read the forecast statistics in every candidate line.
+exp_id: v3b_main
+pairings:
+  - [stat, stat]
+  - [stat, sa]
+  - [stat, ma]
+seeds: {start: 9000, count: 30}
+noise_levels: [none, low]
+max_shots: 150
+prep: {menu: forecast, info: forecasts, n_forecast: 3, forecast_noise: low}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}

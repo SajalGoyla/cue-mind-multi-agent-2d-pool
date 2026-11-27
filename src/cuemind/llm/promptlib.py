@@ -31,8 +31,16 @@ def all_knowledge() -> str:
     return "\n\n".join(knowledge(p) for p in PERSPECTIVES)
 
 
-def system_single() -> str:
-    return "\n\n".join([_read("rules"), all_knowledge(), _read("role_single")])
+def rules_for(info: str = "geometry") -> str:
+    """Rules plus, for v3, the block explaining the extra information in the candidate lines.
+    With info="geometry" this is exactly the v2 rules text (prompts-v2 unchanged)."""
+    if info == "geometry":
+        return _read("rules")
+    return _read("rules") + "\n\n" + _read(f"info_{info}")
+
+
+def system_single(info: str = "geometry") -> str:
+    return "\n\n".join([rules_for(info), all_knowledge(), _read("role_single")])
 
 
 # The safety specialist is presented to the model as the "risk" specialist: a 3B model told it
@@ -43,15 +51,15 @@ RISK_RULE = ("\n\nAs the risk specialist, judge which shots are least likely to 
              "shot; nominate a safety first only if every pot on the list has hard geometry.")
 
 
-def system_specialist(perspective: str) -> str:
+def system_specialist(perspective: str, info: str = "geometry") -> str:
     role = _read("role_specialist").replace("{perspective}", DISPLAY[perspective])
     if perspective == "safety":
         role += RISK_RULE
-    return "\n\n".join([_read("rules"), knowledge(perspective), role])
+    return "\n\n".join([rules_for(info), knowledge(perspective), role])
 
 
-def system_coordinator() -> str:
-    return "\n\n".join([_read("rules"), all_knowledge(), _read("role_coordinator")])
+def system_coordinator(info: str = "geometry") -> str:
+    return "\n\n".join([rules_for(info), all_knowledge(), _read("role_coordinator")])
 
 
 def prompt_version() -> str:

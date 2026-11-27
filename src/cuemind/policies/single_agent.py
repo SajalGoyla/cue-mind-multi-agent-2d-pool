@@ -17,14 +17,13 @@ class SingleAgent:
 
     def __init__(self, client: LLMClient):
         self.client = client
-        self.system = P.system_single()
 
     def decide(self, ctx: DecisionContext) -> Decision:
         t0 = time.perf_counter()
         user = P.user_single(P.decision_context_text(ctx.state, ctx.candidates, ctx.history,
                                                      ctx.ball_in_hand))
         valid = {c.shot_id for c in ctx.candidates}
-        res, attempts = call_with_check(self.client, system=self.system, user=user,
+        res, attempts = call_with_check(self.client, system=P.system_single(ctx.info), user=user,
                                         schema=SingleDecision, agent="single", valid_ids=valid,
                                         is_valid=lambda d: d.shot_id in valid,
                                         repeat_idx=ctx.sample_idx)

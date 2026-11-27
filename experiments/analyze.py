@@ -1,4 +1,4 @@
-"""Regenerate every v2 table and figure from results/ in one command.
+"""Regenerate every v2 and v3 table and figure from results/ in one command.
 
     python experiments/analyze.py
 
@@ -26,7 +26,14 @@ ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
 FIG = RES / "figures"
 COLOR = {"sa": "#eda100", "ma": "#008300", "b1": "#eb6834", "stat": "#2a78d6"}  # validated palette
-LABEL = {"sa": "SA (single agent)", "ma": "MA (team)", "b1": "B1 (easiest pot)", "stat": "Stat"}
+LABEL = {"sa": "SA (single agent)", "ma": "MA (team)", "b1": "B1 (easiest pot)", "stat": "Stat",
+         "rule": "Rule"}
+# (experiment, reference player, title, figure) for every main run
+CONDITIONS = [
+    ("v2_main", "stat", "v2: forecasts for Stat only (SA/MA see geometry)", "v2_win_rates.png"),
+    ("v3a_main", "rule", "v3-A: no forecasts for anyone (geometry + physics hints for all)", "v3a_win_rates.png"),
+    ("v3b_main", "stat", "v3-B: forecasts for everyone", "v3b_win_rates.png"),
+]
 INK, MUTED, GRID = "#1f1f1e", "#6b6a63", "#e6e5e0"
 
 
@@ -92,27 +99,29 @@ def section_floor(md: list[str]) -> None:
                       f"{'yes' if r['win_rate'] >= 0.10 else 'NO'} |")
 
 
-def section_main(md: list[str]) -> None:
-    games = load("v2_main")
+def section_main(md: list[str], exp: str = "v2_main", ref: str = "stat",
+                 title: str = "Main results", fig_name: str = "v2_win_rates.png") -> None:
+    games = load(exp)
     if not games:
         return
-    md.append("\n## Main results (`results/v2_main/games.jsonl`)")
+    R = LABEL[ref]
+    md.append(f"\n## {title} (`results/{exp}/games.jsonl`)")
     fig_rows = []
     for noise in ("low", "none"):
         g = [x for x in games if x.get("noise") == noise]
         if not g:
             continue
         md.append(f"\n### Playing noise: {noise}\n")
-        s = selfplay_summary(g, "stat")
+        s = selfplay_summary(g, ref)
         if s:
-            md.append(f"Control, Stat vs Stat: the breaker wins {s['breaker_win_rate']:.0%} "
+            md.append(f"Control, {R} vs {R}: the breaker wins {s['breaker_win_rate']:.0%} "
                       f"{fmt_ci(s['breaker_win_ci'])} of {s['games']} games ({s['mean_shots']:.1f} shots per game).\n")
-        md += ["| system | games vs Stat | win rate [95% CI] | pot success | fouls/game | balls/inning | "
+        md += [f"| system | games vs {R} | win rate [95% CI] | pot success | fouls/game | balls/inning | "
                "shots/game | safety rate | fallback | calls/decision | in/out tokens per decision | "
                "latency s/decision | unanimous |",
                "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for sysname in ("sa", "ma"):
-            r = pairing_summary(g, sysname, "stat")
+            r = pairing_summary(g, sysname, ref)
             if not r:
                 continue
             fig_rows.append((noise, sysname, r["win_rate"], r["win_rate_ci"]))
@@ -122,9 +131,9 @@ def section_main(md: list[str]) -> None:
                       f"{r['calls_per_decision']:.2f} | {r['input_tokens_per_decision']:.0f} / "
                       f"{r['output_tokens_per_decision']:.0f} | {r['latency_s_per_decision']:.1f} | "
                       + (f"{r['unanimous_rate']:.0%}" if sysname == "ma" else "-") + " |")
-        p = paired_systems(g, "sa", "ma")
+        p = paired_systems(g, "sa", "ma", ref)
         if p:
-            md.append(f"\nPaired comparison per seed (score = wins in the two games against Stat, MA minus SA): "
+            md.append(f"\nPaired comparison per seed (score = wins in the two games against {R}, MA minus SA): "
                       f"mean {p['mean_diff']:+.2f} wins [95% CI {p['ci'][0]:+.2f}, {p['ci'][1]:+.2f}] over "
                       f"{p['seeds']} seeds; MA better on {p['b_better']}, SA better on {p['a_better']}, "
                       f"ties {p['ties']}; sign test p = {p['p']:.3g}.")
@@ -141,15 +150,80 @@ def section_main(md: list[str]) -> None:
         ax.axhline(0.5, color=MUTED, linewidth=1, linestyle="--")
         ax.set_xticks(range(len(noises)), [f"playing noise: {n}" for n in noises])
         ax.set_ylim(0, 1)
-        ax.set_ylabel("win rate against Stat (95% Wilson CI)")
+        ax.set_ylabel(f"win rate against {R} (95% Wilson CI)")
         ax.grid(axis="y", color=GRID)
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
         ax.legend(frameon=False, fontsize=9, loc="upper right")
-        ax.set_title("Full games against the simulation-based reference player", loc="left", fontsize=11)
-        fig.savefig(FIG / "v2_win_rates.png", dpi=180, bbox_inches="tight", facecolor="#fcfcfb")
+        ax.set_title(title.split(":")[0] + f": full games against {R}", loc="left", fontsize=11)
+        fig.savefig(FIG / fig_name, dpi=180, bbox_inches="tight", facecolor="#fcfcfb")
         plt.close(fig)
-        md.append("\nFigure: `results/figures/v2_win_rates.png`")
+        md.append(f"\nFigure: `results/figures/{fig_name}`")
+
+def shot_quality(exp: str) -> dict:
+    """Per (noise, system): pot success of attempted pots, scratch and foul rate per decision,
+    safety share, and (when forecasts exist) agreement with Stat's pick on the same menu."""
+    raw = RES / exp / "raw"
+    out: dict = {}
+    if not raw.exists():
+        return out
+    from cuemind.candidates.model import Candidate
+    from cuemind.policies.search_bot import SearchWeights, expected_value
+
+    w = SearchWeights()
+    for f in sorted(raw.glob("*.jsonl")):
+        noise = "none" if "_none_" in f.name else "low"
+        for line in f.read_text(encoding="utf-8").splitlines():
+            r = json.loads(line)
+            if r.get("kind") != "decision" or r["system"] not in ("SA", "MA"):
+                continue
+            d = out.setdefault((noise, r["system"].lower()), {"n": 0, "pots": 0, "made": 0, "scratch": 0,
+                                                              "foul": 0, "safety": 0, "agree": 0, "agree_n": 0})
+            o = r["outcome"]
+            cands = r["candidates"]
+            ch = next(c for c in cands if c["shot_id"] == r["decision"]["shot_id"])
+            d["n"] += 1
+            d["foul"] += bool(o.get("foul"))
+            d["scratch"] += "scratch" in (o.get("foul") or "")
+            if ch["shot_type"] == "pot":
+                d["pots"] += 1
+                d["made"] += bool(o.get("called_ball_made"))
+            else:
+                d["safety"] += 1
+            if cands and cands[0].get("rollouts"):
+                cs = [Candidate.model_validate(c) for c in cands]
+                best = max(cs, key=lambda c: (expected_value(c, w), c.shot_id))
+                d["agree"] += best.shot_id == ch["shot_id"]
+                d["agree_n"] += 1
+    return out
+
+
+def section_compare(md: list[str]) -> None:
+    rows = []
+    for exp, ref, title, _ in CONDITIONS:
+        for (noise, s), d in sorted(shot_quality(exp).items()):
+            if d["n"]:
+                rows.append((title.split(":")[0], noise, s, d))
+    if not rows:
+        return
+    md += ["\n## Across conditions: how well SA and MA play (shot level, all decisions)\n",
+           "Opponents differ between conditions (Stat or Rule), so compare win rates only within a "
+           "condition; these shot-level numbers describe the agents' own play.\n",
+           "| condition | playing noise | system | decisions | pot success | scratch / decision | "
+           "foul / decision | safety share | same pick as Stat's objective |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    for cond, noise, s, d in rows:
+        agree = f"{d['agree'] / d['agree_n']:.0%}" if d["agree_n"] else "-"
+        md.append(f"| {cond} | {noise} | {s.upper()} | {d['n']} | {d['made'] / max(1, d['pots']):.2f} | "
+                  f"{d['scratch'] / d['n']:.3f} | {d['foul'] / d['n']:.3f} | {d['safety'] / d['n']:.2f} | {agree} |")
+
+
+def section_hints(md: list[str]) -> None:
+    p = RES / "v3_hint_validation.md"
+    if p.exists():
+        md.append("\n## Physics-hint accuracy (v3-A; `results/v3_hint_validation.md`)\n")
+        md += [x for x in p.read_text(encoding="utf-8").splitlines()[2:7] if x.strip()]
+
 
 
 def moments(max_items: int = 12) -> None:
@@ -184,12 +258,17 @@ def moments(max_items: int = 12) -> None:
 
 
 def main() -> None:
-    md = ["# CueMind v2 results", "",
-          "Generated by `python experiments/analyze.py`; do not edit by hand. Stat (reference) "
-          "simulates every option; SA and MA see geometry only (D-029)."]
+    md = ["# CueMind results (v2 and v3)", "",
+          "Generated by `python experiments/analyze.py`; do not edit by hand. v2: Stat simulates "
+          "every option, SA and MA see geometry only (D-029). v3-A: nobody sees forecasts; all "
+          "players read geometry + simulation-free physics hints, reference player Rule (D-031). "
+          "v3-B: everybody sees the forecasts, reference player Stat (D-031)."]
     section_pilot(md)
     section_floor(md)
-    section_main(md)
+    for exp, ref, title, fig in CONDITIONS:
+        section_main(md, exp, ref, title, fig)
+    section_compare(md)
+    section_hints(md)
     moments()
     RES.mkdir(exist_ok=True)
     (RES / "summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")

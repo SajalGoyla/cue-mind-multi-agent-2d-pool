@@ -48,8 +48,8 @@ def clean_picks(sl: Shortlist, valid: set[str]) -> list[dict]:
     return out
 
 
-def _specialist_node(client: LLMClient, perspective: str):
-    system = P.system_specialist(perspective)
+def _specialist_node(client: LLMClient, perspective: str, info: str):
+    system = P.system_specialist(perspective, info)
 
     def node(state: MAState) -> dict[str, Any]:
         valid = set(state["valid_ids"])
@@ -77,8 +77,8 @@ def _route(state: MAState) -> str:
     return END if state.get("unanimous") else "coordinator"
 
 
-def _coordinator_node(client: LLMClient):
-    system = P.system_coordinator()
+def _coordinator_node(client: LLMClient, info: str):
+    system = P.system_coordinator(info)
 
     def node(state: MAState) -> dict[str, Any]:
         shortlists = state.get("shortlists", {})
@@ -104,14 +104,14 @@ def _coordinator_node(client: LLMClient):
     return node
 
 
-def build_graph(client: LLMClient):
+def build_graph(client: LLMClient, info: str = "geometry"):
     g = StateGraph(MAState)
     for s in P.PERSPECTIVES:
-        g.add_node(s, _specialist_node(client, s))
+        g.add_node(s, _specialist_node(client, s, info))
         g.add_edge(START, s)
     g.add_node("join", _join)
     g.add_edge(list(P.PERSPECTIVES), "join")
-    g.add_node("coordinator", _coordinator_node(client))
+    g.add_node("coordinator", _coordinator_node(client, info))
     g.add_conditional_edges("join", _route, ["coordinator", END])
     g.add_edge("coordinator", END)
     return g.compile()

@@ -23,6 +23,7 @@ class DecisionContext:
     ball_in_hand: bool = False  # the cue ball was just placed after an opponent's foul
     request_tag: str = ""       # stable id of this decision (logging only)
     sample_idx: int = 0         # >0 draws an independent LLM sample (decision-variance runs)
+    info: str = "geometry"      # what the candidate lines contain: geometry | hints | forecasts
 
     def by_id(self, shot_id: str) -> Candidate | None:
         return next((c for c in self.candidates if c.shot_id == shot_id), None)

@@ -23,8 +23,13 @@ QUEUE = [
     ("v2_floor", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v2_floor.yaml"]),
     ("v2_dev", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v2_dev.yaml"]),
     ("v2_main", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v2_main.yaml"]),
+    ("v3_dev", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v3_dev.yaml"]),
+    ("v3_dev_b", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v3_dev_b.yaml"]),
+    ("v3a_main", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v3a_main.yaml"]),
+    ("v3b_main", [PY, "experiments/run_tournament.py", "--config", "experiments/configs/v3b_main.yaml"]),
     ("analyze", [PY, "experiments/analyze.py"]),
 ]
+DEFAULT = ["v3_dev", "v3_dev_b", "v3a_main", "v3b_main", "analyze"]
 
 
 def keep_awake() -> None:
@@ -67,7 +72,8 @@ def main() -> int:
         log(f"waiting for {run_log.name} to finish")
         while not (run_log.exists() and "access_level" in run_log.read_text(encoding="utf-8", errors="replace")):
             time.sleep(30)
-    steps = [s for s in QUEUE if not a.only or s[0] in a.only.split(",")]
+    wanted = a.only.split(",") if a.only else DEFAULT
+    steps = [s for s in QUEUE if s[0] in wanted]
     for name, cmd in steps:
         if "run_tournament.py" in cmd[1]:
             cmd = cmd + ["--workers", str(a.concurrency)]

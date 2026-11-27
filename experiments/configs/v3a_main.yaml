@@ -1,0 +1,16 @@
+# v3 condition A: nobody sees forecasts. Every player (Rule, SA, MA) gets the same menu,
+# selected by geometry and simulation-free physics hints, with the hints in every line.
+# Same 30 seeds as v2_main, seats swapped, common random numbers, both playing-noise levels.
+exp_id: v3a_main
+pairings:
+  - [rule, rule]
+  - [rule, sa]
+  - [rule, ma]
+seeds: {start: 9000, count: 30}
+noise_levels: [none, low]
+max_shots: 150
+prep: {menu: geometric, info: hints}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}

@@ -109,7 +109,7 @@ def play_game(policies: dict[str, Policy], seed: int, *, noise: str = "medium",
                 cands = prepare(state, prep, rollout_key=(seed, k))
                 ctx = DecisionContext(state=state, candidates=cands, history=history[-HISTORY_LEN:],
                                       game_id=game_id, rng=rng_for(seed, k, "policy", seat),
-                                      ball_in_hand=rec["ball_in_hand"],
+                                      ball_in_hand=rec["ball_in_hand"], info=prep.info,
                                       request_tag=f"{game_id}:{k}")
                 t_dec = time.perf_counter()
                 decision = _decide_safely(policies[seat], ctx)

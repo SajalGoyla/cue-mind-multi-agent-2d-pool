@@ -1,0 +1,14 @@
+# v3 sanity check before the main runs (dev seeds only): one game per seat for SA and MA in
+# each condition, to confirm the agents read the hint / forecast lines sensibly.
+exp_id: v3_dev
+pairings:
+  - [rule, sa]
+  - [rule, ma]
+seeds: {start: 8500, count: 1}
+noise_levels: [none]
+max_shots: 150
+prep: {menu: geometric, info: hints}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama}
+  ma: {llm: ollama}

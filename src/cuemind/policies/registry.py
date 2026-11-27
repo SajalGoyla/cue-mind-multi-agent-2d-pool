@@ -1,6 +1,7 @@
 """Build policies from short names used in CLIs and experiment configs (v2).
 
-Names: stat (simulation-based reference player), b1 (easiest pot; pilot only),
+Names: stat (simulation-based reference player), rule (hint-based reference player, v3-A),
+b1 (easiest pot; pilot only),
 sa (single LLM agent), ma (multi-agent team).
 
 LLM policies accept keyword arguments from experiment configs:
@@ -15,6 +16,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from cuemind.policies.rule_bot import RuleBot
 from cuemind.policies.search_bot import SearchBot
 from cuemind.policies.simple_bots import GeometricBot
 
@@ -49,6 +51,7 @@ def _ma(**kw):
 _BUILDERS = {
     "stat": lambda **kw: SearchBot(),
     "b1": lambda **kw: GeometricBot(),
+    "rule": lambda **kw: RuleBot(),
     "sa": _sa,
     "ma": _ma,
 }
