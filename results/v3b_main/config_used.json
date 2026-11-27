@@ -1,0 +1,84 @@
+{
+  "config": {
+    "exp_id": "v3b_main",
+    "pairings": [
+      [
+        "stat",
+        "stat"
+      ],
+      [
+        "stat",
+        "sa"
+      ],
+      [
+        "stat",
+        "ma"
+      ]
+    ],
+    "seeds": {
+      "start": 9000,
+      "count": 30
+    },
+    "noise_levels": [
+      "none",
+      "low"
+    ],
+    "max_shots": 150,
+    "prep": {
+      "menu": "forecast",
+      "info": "forecasts",
+      "n_forecast": 3,
+      "forecast_noise": "low"
+    },
+    "workers": 2,
+    "policy_kwargs": {
+      "sa": {
+        "llm": "ollama"
+      },
+      "ma": {
+        "llm": "ollama"
+      }
+    }
+  },
+  "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029
+  ],
+  "git_commit": "74e8686",
+  "prep": {
+    "n_forecast": 3,
+    "forecast_noise": "low",
+    "max_pots": 12,
+    "max_safeties": 3,
+    "menu": "forecast",
+    "info": "forecasts"
+  }
+}

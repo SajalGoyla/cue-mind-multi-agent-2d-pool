@@ -1,0 +1,5 @@
+noise,system,opponent,games,score,win_rate,win_rate_ci,paired_seeds,paired_mean,paired_ci,sign_test_p,errors,shot_cap,mean_shots,pot_success,fouls_per_game,scratches_per_game,safety_rate,safety_success,balls_per_game,fallback_rate,balls_per_inning,calls_per_decision,input_tokens_per_decision,output_tokens_per_decision,latency_s_per_decision,unanimous_rate
+none,rule,sa,2,2.0,1.0,"(0.342, 1.0)",1,1.0,"(1.0, 1.0)",1.0,0,0,16.0,1.0,0.0,0.0,0.23529411764705882,0.0,6.5,0.0,2.6,0.0,0.0,0.0,0.0,0.0
+none,sa,rule,2,0.0,0.0,"(0.0, 0.658)",1,-1.0,"(-1.0, -1.0)",1.0,0,0,16.0,0.7272727272727273,1.0,1.0,0.15384615384615385,0.0,4.5,0.0,1.8,1.0,2181.846153846154,99.3076923076923,4.79476923076923,0.0
+none,rule,ma,2,0.0,0.0,"(0.0, 0.658)",1,-1.0,"(-1.0, -1.0)",1.0,0,0,15.5,1.0,0.5,0.0,0.375,0.3333333333333333,6.0,0.0,2.0,0.0,0.0,0.0,0.0,0.0
+none,ma,rule,2,2.0,1.0,"(0.342, 1.0)",1,1.0,"(1.0, 1.0)",1.0,0,0,15.5,0.8,0.0,0.0,0.23076923076923078,0.6666666666666666,4.5,0.0,1.5,3.769230769230769,7670.846153846154,620.0769230769231,10.516692307692306,0.46153846153846156

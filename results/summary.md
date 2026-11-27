@@ -42,6 +42,58 @@ Paired comparison per seed (score = wins in the two games against Stat, MA minus
 
 Figure: `results/figures/v2_win_rates.png`
 
+## v3-A: no forecasts for anyone (geometry + physics hints for all) (`results/v3a_main/games.jsonl`)
+
+### Playing noise: low
+
+Control, Rule vs Rule: the breaker wins 40% [0.25, 0.58] of 30 games (18.1 shots per game).
+
+| system | games vs Rule | win rate [95% CI] | pot success | fouls/game | balls/inning | shots/game | safety rate | fallback | calls/decision | in/out tokens per decision | latency s/decision | unanimous |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sa | 60 | 0.45 [0.33, 0.57] | 0.61 | 1.23 | 1.21 | 18.4 | 0.19 | 0.000 | 1.03 | 2273 / 105 | 2.2 | - |
+| ma | 60 | 0.45 [0.33, 0.57] | 0.61 | 1.13 | 1.21 | 18.2 | 0.17 | 0.002 | 3.56 | 7527 / 609 | 8.4 | 53% |
+
+Paired comparison per seed (score = wins in the two games against Rule, MA minus SA): mean +0.00 wins [95% CI -0.23, +0.27] over 30 seeds; MA better on 5, SA better on 6, ties 19; sign test p = 1.
+
+### Playing noise: none
+
+Control, Rule vs Rule: the breaker wins 53% [0.36, 0.70] of 30 games (14.6 shots per game).
+
+| system | games vs Rule | win rate [95% CI] | pot success | fouls/game | balls/inning | shots/game | safety rate | fallback | calls/decision | in/out tokens per decision | latency s/decision | unanimous |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sa | 60 | 0.38 [0.27, 0.51] | 0.82 | 0.52 | 2.01 | 15.6 | 0.24 | 0.000 | 1.03 | 2259 / 104 | 1.9 | - |
+| ma | 60 | 0.50 [0.38, 0.62] | 0.84 | 0.72 | 2.24 | 15.6 | 0.21 | 0.000 | 3.61 | 7573 / 617 | 9.4 | 49% |
+
+Paired comparison per seed (score = wins in the two games against Rule, MA minus SA): mean +0.23 wins [95% CI -0.13, +0.60] over 30 seeds; MA better on 11, SA better on 7, ties 12; sign test p = 0.481.
+
+Figure: `results/figures/v3a_win_rates.png`
+
+## v3-B: forecasts for everyone (`results/v3b_main/games.jsonl`)
+
+### Playing noise: low
+
+Control, Stat vs Stat: the breaker wins 57% [0.39, 0.73] of 30 games (16.2 shots per game).
+
+| system | games vs Stat | win rate [95% CI] | pot success | fouls/game | balls/inning | shots/game | safety rate | fallback | calls/decision | in/out tokens per decision | latency s/decision | unanimous |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sa | 60 | 0.48 [0.36, 0.61] | 0.69 | 0.65 | 1.38 | 18.0 | 0.19 | 0.002 | 1.01 | 2720 / 106 | 2.4 | - |
+| ma | 60 | 0.53 [0.41, 0.65] | 0.73 | 0.63 | 1.66 | 17.7 | 0.16 | 0.000 | 3.63 | 9699 / 628 | 9.2 | 45% |
+
+Paired comparison per seed (score = wins in the two games against Stat, MA minus SA): mean +0.10 wins [95% CI -0.20, +0.40] over 30 seeds; MA better on 8, SA better on 4, ties 18; sign test p = 0.388.
+
+### Playing noise: none
+
+Control, Stat vs Stat: the breaker wins 43% [0.27, 0.61] of 30 games (13.6 shots per game).
+
+| system | games vs Stat | win rate [95% CI] | pot success | fouls/game | balls/inning | shots/game | safety rate | fallback | calls/decision | in/out tokens per decision | latency s/decision | unanimous |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sa | 60 | 0.37 [0.26, 0.49] | 0.94 | 0.37 | 2.84 | 14.4 | 0.23 | 0.003 | 1.02 | 2699 / 107 | 2.6 | - |
+| ma | 60 | 0.33 [0.23, 0.46] | 0.92 | 0.37 | 2.71 | 14.7 | 0.24 | 0.003 | 3.69 | 9521 / 631 | 9.8 | 43% |
+
+Paired comparison per seed (score = wins in the two games against Stat, MA minus SA): mean -0.07 wins [95% CI -0.37, +0.23] over 30 seeds; MA better on 8, SA better on 9, ties 13; sign test p = 1.
+
+Figure: `results/figures/v3b_win_rates.png`
+
 ## Across conditions: how well SA and MA play (shot level, all decisions)
 
 Opponents differ between conditions (Stat or Rule), so compare win rates only within a condition; these shot-level numbers describe the agents' own play.
@@ -52,6 +104,14 @@ Opponents differ between conditions (Stat or Rule), so compare win rates only wi
 | v2 | low | SA | 491 | 0.71 | 0.065 | 0.088 | 0.20 | 13% |
 | v2 | none | MA | 364 | 0.95 | 0.047 | 0.071 | 0.25 | 18% |
 | v2 | none | SA | 365 | 0.93 | 0.052 | 0.071 | 0.26 | 15% |
+| v3-A | low | MA | 501 | 0.69 | 0.094 | 0.136 | 0.17 | - |
+| v3-A | low | SA | 499 | 0.68 | 0.092 | 0.148 | 0.19 | - |
+| v3-A | none | MA | 447 | 0.92 | 0.072 | 0.096 | 0.21 | - |
+| v3-A | none | SA | 415 | 0.89 | 0.058 | 0.075 | 0.24 | - |
+| v3-B | low | MA | 498 | 0.77 | 0.046 | 0.076 | 0.16 | 25% |
+| v3-B | low | SA | 495 | 0.72 | 0.053 | 0.079 | 0.19 | 25% |
+| v3-B | none | MA | 373 | 0.98 | 0.035 | 0.059 | 0.24 | 27% |
+| v3-B | none | SA | 368 | 0.98 | 0.030 | 0.060 | 0.23 | 24% |
 
 ## Physics-hint accuracy (v3-A; `results/v3_hint_validation.md`)
 

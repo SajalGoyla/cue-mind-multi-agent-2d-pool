@@ -1,43 +1,121 @@
-2026-11-25 22:21:00 Ollama watchdog on (limit 3000 MB)
-2026-11-25 22:21:00 start v2_main: experiments/run_tournament.py --config experiments/configs/v2_main.yaml --workers 2
-2026-11-25 22:22:01 watchdog: llama-server RSS 5197 MB > 3000 MB, restarting Ollama
-2026-11-25 22:22:26 watchdog: restart 1 done (RSS now 774 MB)
-2026-11-25 22:46:52 watchdog: llama-server RSS 3301 MB > 3000 MB, restarting Ollama
-2026-11-25 22:47:15 watchdog: restart 2 done (RSS now 0 MB)
-2026-11-25 22:56:25 watchdog: llama-server RSS 3086 MB > 3000 MB, restarting Ollama
-2026-11-25 22:56:48 watchdog: restart 3 done (RSS now 0 MB)
-2026-11-25 23:06:58 watchdog: llama-server RSS 3109 MB > 3000 MB, restarting Ollama
-2026-11-25 23:07:30 watchdog: restart 4 done (RSS now 0 MB)
-2026-11-25 23:17:42 watchdog: llama-server RSS 3198 MB > 3000 MB, restarting Ollama
-2026-11-25 23:18:18 watchdog: restart 5 done (RSS now 0 MB)
-2026-11-25 23:33:00 watchdog: llama-server RSS 3144 MB > 3000 MB, restarting Ollama
-2026-11-25 23:33:42 watchdog: restart 6 done (RSS now 0 MB)
-2026-11-25 23:50:39 watchdog: llama-server RSS 3015 MB > 3000 MB, restarting Ollama
-2026-11-25 23:51:11 watchdog: restart 7 done (RSS now 0 MB)
-2026-11-26 00:08:03 watchdog: llama-server RSS 3049 MB > 3000 MB, restarting Ollama
-2026-11-26 00:08:33 watchdog: restart 8 done (RSS now 775 MB)
-2026-11-26 00:22:16 watchdog: llama-server RSS 3047 MB > 3000 MB, restarting Ollama
-2026-11-26 00:22:58 watchdog: restart 9 done (RSS now 0 MB)
-2026-11-26 00:40:58 watchdog: llama-server RSS 3083 MB > 3000 MB, restarting Ollama
-2026-11-26 00:41:31 watchdog: restart 10 done (RSS now 775 MB)
-2026-11-26 02:10:31 watchdog: llama-server RSS 3030 MB > 3000 MB, restarting Ollama
-2026-11-26 02:11:11 watchdog: restart 11 done (RSS now 775 MB)
-2026-11-26 02:56:30 watchdog: llama-server RSS 3348 MB > 3000 MB, restarting Ollama
-2026-11-26 02:56:58 watchdog: restart 12 done (RSS now 0 MB)
-2026-11-26 03:07:08 watchdog: llama-server RSS 3375 MB > 3000 MB, restarting Ollama
-2026-11-26 03:07:34 watchdog: restart 13 done (RSS now 0 MB)
-2026-11-26 03:15:42 watchdog: llama-server RSS 3263 MB > 3000 MB, restarting Ollama
-2026-11-26 03:16:17 watchdog: restart 14 done (RSS now 0 MB)
-2026-11-26 03:25:27 watchdog: llama-server RSS 3177 MB > 3000 MB, restarting Ollama
-2026-11-26 03:26:01 watchdog: restart 15 done (RSS now 0 MB)
-2026-11-26 03:35:11 watchdog: llama-server RSS 3090 MB > 3000 MB, restarting Ollama
-2026-11-26 03:35:45 watchdog: restart 16 done (RSS now 0 MB)
-2026-11-26 03:46:57 watchdog: llama-server RSS 3158 MB > 3000 MB, restarting Ollama
-2026-11-26 03:47:26 watchdog: restart 17 done (RSS now 0 MB)
-2026-11-26 03:54:34 watchdog: llama-server RSS 3053 MB > 3000 MB, restarting Ollama
-2026-11-26 03:55:12 watchdog: restart 18 done (RSS now 0 MB)
-2026-11-26 04:04:22 watchdog: llama-server RSS 3293 MB > 3000 MB, restarting Ollama
-2026-11-26 04:05:00 watchdog: restart 19 done (RSS now 0 MB)
-2026-11-26 04:13:52 end v2_main: exit 0 after 352.9 min
-2026-11-26 04:13:52 start analyze: experiments/analyze.py
-2026-11-26 04:13:54 end analyze: exit 0 after 0.0 min
+2026-11-26 21:53:26 Ollama watchdog on (limit 3500 MB)
+2026-11-26 21:53:26 start v3_dev: experiments/run_tournament.py --config experiments/configs/v3_dev.yaml --workers 2
+2026-11-26 21:55:49 end v3_dev: exit 0 after 2.4 min
+2026-11-26 21:55:49 start v3_dev_b: experiments/run_tournament.py --config experiments/configs/v3_dev_b.yaml --workers 2
+2026-11-26 21:59:55 end v3_dev_b: exit 0 after 4.1 min
+2026-11-26 21:59:55 start v3a_main: experiments/run_tournament.py --config experiments/configs/v3a_main.yaml --workers 2
+2026-11-26 22:16:37 watchdog: llama-server RSS 3541 MB > 3500 MB, restarting Ollama
+2026-11-26 22:17:17 watchdog: restart 1 done (RSS now 0 MB)
+2026-11-26 22:25:21 watchdog: llama-server RSS 3833 MB > 3500 MB, restarting Ollama
+2026-11-26 22:25:57 watchdog: restart 2 done (RSS now 0 MB)
+2026-11-26 22:32:00 watchdog: llama-server RSS 3796 MB > 3500 MB, restarting Ollama
+2026-11-26 22:32:31 watchdog: restart 3 done (RSS now 0 MB)
+2026-11-26 22:39:34 watchdog: llama-server RSS 4039 MB > 3500 MB, restarting Ollama
+2026-11-26 22:40:11 watchdog: restart 4 done (RSS now 0 MB)
+2026-11-26 22:45:13 watchdog: llama-server RSS 3520 MB > 3500 MB, restarting Ollama
+2026-11-26 22:45:43 watchdog: restart 5 done (RSS now 0 MB)
+2026-11-26 22:50:45 watchdog: llama-server RSS 3615 MB > 3500 MB, restarting Ollama
+2026-11-26 22:51:29 watchdog: restart 6 done (RSS now 0 MB)
+2026-11-26 22:55:31 watchdog: llama-server RSS 3536 MB > 3500 MB, restarting Ollama
+2026-11-26 22:56:01 watchdog: restart 7 done (RSS now 775 MB)
+2026-11-26 23:02:03 watchdog: llama-server RSS 3880 MB > 3500 MB, restarting Ollama
+2026-11-26 23:02:33 watchdog: restart 8 done (RSS now 0 MB)
+2026-11-26 23:05:34 watchdog: llama-server RSS 3761 MB > 3500 MB, restarting Ollama
+2026-11-26 23:06:06 watchdog: restart 9 done (RSS now 0 MB)
+2026-11-26 23:09:07 watchdog: llama-server RSS 4134 MB > 3500 MB, restarting Ollama
+2026-11-26 23:09:39 watchdog: restart 10 done (RSS now 775 MB)
+2026-11-26 23:12:41 watchdog: llama-server RSS 4123 MB > 3500 MB, restarting Ollama
+2026-11-26 23:13:13 watchdog: restart 11 done (RSS now 0 MB)
+2026-11-26 23:17:15 watchdog: llama-server RSS 3781 MB > 3500 MB, restarting Ollama
+2026-11-26 23:17:45 watchdog: restart 12 done (RSS now 0 MB)
+2026-11-26 23:25:49 watchdog: llama-server RSS 3820 MB > 3500 MB, restarting Ollama
+2026-11-26 23:26:28 watchdog: restart 13 done (RSS now 0 MB)
+2026-11-26 23:33:32 watchdog: llama-server RSS 3810 MB > 3500 MB, restarting Ollama
+2026-11-26 23:34:03 watchdog: restart 14 done (RSS now 0 MB)
+2026-11-26 23:41:06 watchdog: llama-server RSS 3589 MB > 3500 MB, restarting Ollama
+2026-11-26 23:41:48 watchdog: restart 15 done (RSS now 0 MB)
+2026-11-26 23:46:50 watchdog: llama-server RSS 3655 MB > 3500 MB, restarting Ollama
+2026-11-26 23:47:19 watchdog: restart 16 done (RSS now 0 MB)
+2026-11-26 23:55:23 watchdog: llama-server RSS 3648 MB > 3500 MB, restarting Ollama
+2026-11-26 23:56:04 watchdog: restart 17 done (RSS now 227 MB)
+2026-11-26 23:57:14 end v3a_main: exit 0 after 117.3 min
+2026-11-26 23:57:14 start v3b_main: experiments/run_tournament.py --config experiments/configs/v3b_main.yaml --workers 2
+2026-11-27 00:13:12 watchdog: llama-server RSS 3614 MB > 3500 MB, restarting Ollama
+2026-11-27 00:13:41 watchdog: restart 18 done (RSS now 159 MB)
+2026-11-27 00:18:43 watchdog: llama-server RSS 3541 MB > 3500 MB, restarting Ollama
+2026-11-27 00:19:14 watchdog: restart 19 done (RSS now 0 MB)
+2026-11-27 00:24:16 watchdog: llama-server RSS 3824 MB > 3500 MB, restarting Ollama
+2026-11-27 00:24:43 watchdog: restart 20 done (RSS now 0 MB)
+2026-11-27 00:30:46 watchdog: llama-server RSS 3531 MB > 3500 MB, restarting Ollama
+2026-11-27 00:31:09 watchdog: restart 21 done (RSS now 0 MB)
+2026-11-27 00:35:11 watchdog: llama-server RSS 3727 MB > 3500 MB, restarting Ollama
+2026-11-27 00:35:41 watchdog: restart 22 done (RSS now 0 MB)
+2026-11-27 00:39:42 watchdog: llama-server RSS 3786 MB > 3500 MB, restarting Ollama
+2026-11-27 00:40:14 watchdog: restart 23 done (RSS now 0 MB)
+2026-11-27 00:44:16 watchdog: llama-server RSS 3701 MB > 3500 MB, restarting Ollama
+2026-11-27 00:44:49 watchdog: restart 24 done (RSS now 0 MB)
+2026-11-27 00:48:51 watchdog: llama-server RSS 4022 MB > 3500 MB, restarting Ollama
+2026-11-27 00:49:21 watchdog: restart 25 done (RSS now 0 MB)
+2026-11-27 00:54:23 watchdog: llama-server RSS 3685 MB > 3500 MB, restarting Ollama
+2026-11-27 00:54:57 watchdog: restart 26 done (RSS now 0 MB)
+2026-11-27 01:01:00 watchdog: llama-server RSS 3710 MB > 3500 MB, restarting Ollama
+2026-11-27 01:01:39 watchdog: restart 27 done (RSS now 0 MB)
+2026-11-27 01:07:42 watchdog: llama-server RSS 3761 MB > 3500 MB, restarting Ollama
+2026-11-27 01:08:20 watchdog: restart 28 done (RSS now 111 MB)
+2026-11-27 01:14:23 watchdog: llama-server RSS 3578 MB > 3500 MB, restarting Ollama
+2026-11-27 01:15:01 watchdog: restart 29 done (RSS now 0 MB)
+2026-11-27 01:20:03 watchdog: llama-server RSS 3539 MB > 3500 MB, restarting Ollama
+2026-11-27 01:20:42 watchdog: restart 30 done (RSS now 0 MB)
+2026-11-27 01:24:44 watchdog: llama-server RSS 4042 MB > 3500 MB, restarting Ollama
+2026-11-27 01:25:24 watchdog: restart 31 done (RSS now 0 MB)
+2026-11-27 01:29:26 watchdog: llama-server RSS 3538 MB > 3500 MB, restarting Ollama
+2026-11-27 01:29:59 watchdog: restart 32 done (RSS now 0 MB)
+2026-11-27 01:35:01 watchdog: llama-server RSS 3729 MB > 3500 MB, restarting Ollama
+2026-11-27 01:35:35 watchdog: restart 33 done (RSS now 0 MB)
+2026-11-27 01:40:38 watchdog: llama-server RSS 3615 MB > 3500 MB, restarting Ollama
+2026-11-27 01:41:14 watchdog: restart 34 done (RSS now 0 MB)
+2026-11-27 02:01:23 watchdog: llama-server RSS 3764 MB > 3500 MB, restarting Ollama
+2026-11-27 02:01:52 watchdog: restart 35 done (RSS now 0 MB)
+2026-11-27 02:06:55 watchdog: llama-server RSS 3670 MB > 3500 MB, restarting Ollama
+2026-11-27 02:07:22 watchdog: restart 36 done (RSS now 0 MB)
+2026-11-27 02:13:25 watchdog: llama-server RSS 3965 MB > 3500 MB, restarting Ollama
+2026-11-27 02:13:57 watchdog: restart 37 done (RSS now 0 MB)
+2026-11-27 02:17:59 watchdog: llama-server RSS 3587 MB > 3500 MB, restarting Ollama
+2026-11-27 02:18:28 watchdog: restart 38 done (RSS now 0 MB)
+2026-11-27 02:22:30 watchdog: llama-server RSS 4029 MB > 3500 MB, restarting Ollama
+2026-11-27 02:22:59 watchdog: restart 39 done (RSS now 0 MB)
+2026-11-27 02:28:01 watchdog: llama-server RSS 3967 MB > 3500 MB, restarting Ollama
+2026-11-27 02:28:29 watchdog: restart 40 done (RSS now 0 MB)
+2026-11-27 02:33:31 watchdog: llama-server RSS 4210 MB > 3500 MB, restarting Ollama
+2026-11-27 02:33:57 watchdog: restart 41 done (RSS now 0 MB)
+2026-11-27 02:37:59 watchdog: llama-server RSS 3940 MB > 3500 MB, restarting Ollama
+2026-11-27 02:38:28 watchdog: restart 42 done (RSS now 0 MB)
+2026-11-27 02:42:30 watchdog: llama-server RSS 3536 MB > 3500 MB, restarting Ollama
+2026-11-27 02:43:12 watchdog: restart 43 done (RSS now 0 MB)
+2026-11-27 02:48:14 watchdog: llama-server RSS 3672 MB > 3500 MB, restarting Ollama
+2026-11-27 02:48:51 watchdog: restart 44 done (RSS now 0 MB)
+2026-11-27 02:53:54 watchdog: llama-server RSS 3850 MB > 3500 MB, restarting Ollama
+2026-11-27 02:54:42 watchdog: restart 45 done (RSS now 0 MB)
+2026-11-27 03:00:45 watchdog: llama-server RSS 3711 MB > 3500 MB, restarting Ollama
+2026-11-27 03:01:23 watchdog: restart 46 done (RSS now 0 MB)
+2026-11-27 03:06:25 watchdog: llama-server RSS 3623 MB > 3500 MB, restarting Ollama
+2026-11-27 03:06:55 watchdog: restart 47 done (RSS now 0 MB)
+2026-11-27 03:12:58 watchdog: llama-server RSS 3588 MB > 3500 MB, restarting Ollama
+2026-11-27 03:13:43 watchdog: restart 48 done (RSS now 0 MB)
+2026-11-27 03:19:46 watchdog: llama-server RSS 3883 MB > 3500 MB, restarting Ollama
+2026-11-27 03:20:24 watchdog: restart 49 done (RSS now 0 MB)
+2026-11-27 03:24:26 watchdog: llama-server RSS 3717 MB > 3500 MB, restarting Ollama
+2026-11-27 03:25:02 watchdog: restart 50 done (RSS now 0 MB)
+2026-11-27 03:30:04 watchdog: llama-server RSS 3646 MB > 3500 MB, restarting Ollama
+2026-11-27 03:30:33 watchdog: restart 51 done (RSS now 0 MB)
+2026-11-27 03:33:35 watchdog: llama-server RSS 3756 MB > 3500 MB, restarting Ollama
+2026-11-27 03:34:09 watchdog: restart 52 done (RSS now 0 MB)
+2026-11-27 03:40:12 watchdog: llama-server RSS 3981 MB > 3500 MB, restarting Ollama
+2026-11-27 03:40:35 watchdog: restart 53 done (RSS now 774 MB)
+2026-11-27 03:43:36 watchdog: llama-server RSS 3580 MB > 3500 MB, restarting Ollama
+2026-11-27 03:44:18 watchdog: restart 54 done (RSS now 0 MB)
+2026-11-27 03:49:20 watchdog: llama-server RSS 3618 MB > 3500 MB, restarting Ollama
+2026-11-27 03:50:02 watchdog: restart 55 done (RSS now 0 MB)
+2026-11-27 03:52:10 end v3b_main: exit 0 after 234.9 min
+2026-11-27 03:52:10 start analyze: experiments/analyze.py
+2026-11-27 03:52:17 end analyze: exit 0 after 0.1 min
