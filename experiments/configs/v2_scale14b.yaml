@@ -1,0 +1,16 @@
+# Model-size check (prediction in docs/PLAN_SCALE_14B.md): identical to v2_main (same code,
+# frozen prompts-v2, menu, Stat, seeds, seat swap, common random numbers) except the LLM is
+# Qwen 2.5 14B Instruct instead of 3B, and only the primary condition (zero playing noise).
+# The Stat vs Stat control does not depend on the LLM and is reused from v2_main.
+exp_id: v2_scale14b
+pairings:
+  - [stat, sa]
+  - [stat, ma]
+seeds: {start: 9000, count: 30}
+noise_levels: [none]
+max_shots: 150
+prep: {n_forecast: 3, forecast_noise: low}
+workers: 2
+policy_kwargs:
+  sa: {llm: ollama, model: "qwen2.5:14b-instruct"}
+  ma: {llm: ollama, model: "qwen2.5:14b-instruct"}
