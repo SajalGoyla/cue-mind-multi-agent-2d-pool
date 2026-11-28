@@ -225,3 +225,7 @@ Estimated ~8.5 hours on the RTX 4060 laptop; keep the machine awake (Windows pow
 Finished 04:13 (352.9 min; 300 games, 0 errors, 20 Ollama watchdog restarts). Results: `docs/RESULTS_V2.md`, `results/summary.md`, `results/figures/v2_win_rates.png`. Zero noise (primary): SA 22 % [13, 34], MA 25 % [16, 37] against Stat; paired MA − SA +0.07 wins per seed [−0.17, +0.30], p = 0.77. Low noise: SA 37 % [26, 49], MA 33 % [23, 46]; paired −0.07 [−0.37, +0.23], p = 1.0. MA ≈ 3.9 calls and ~4× latency per decision. Conclusion: no detectable benefit from the team for the 3B model.
 
 **Next:** pick 3–4 moments from `results/v2_main/moments.md` for the slides; decide whether to push `v2-games` / merge into `main`; optional LoRA (PLAN_V2 §9); slides and report.
+
+## 2026-11-27: model-size check, Qwen 2.5 14B (branch `scale-14b`)
+
+Plan and predictions written first (`docs/PLAN_SCALE_14B.md`). 120 games (Stat vs SA and Stat vs MA, seeds 9000–9029, both seats, zero noise) on a GCP spot L4; 0 errors, 0 fallbacks; preempted twice, resumed. Results (`docs/RESULTS_SCALE_14B.md`): against Stat, SA 32 % [21, 44] and MA 35 % [24, 48] at 14B, compared with 22 % and 25 % at 3B. MA − SA +0.07 wins per seed [−0.20, +0.33], p = 0.61, the same as at 3B. Bigger model: +0.20 wins per seed for both systems (not significant). The team still shows no detectable benefit; model size helps more than adding agents. All cloud resources deleted; cost ≈ $3.
